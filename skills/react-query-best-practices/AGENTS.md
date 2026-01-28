@@ -53,6 +53,10 @@ Comprehensive guide for React Query (TanStack Query) based on TkDodo's authorita
    - 7.1 [Copying Query Data to State](#71-copying-query-data-to-state)
    - 7.2 [Missing Query Key Dependencies](#72-missing-query-key-dependencies)
    - 7.3 [Fetch Not Rejecting on Errors](#73-fetch-not-rejecting-on-errors)
+8. [Migration to v5](#8-migration-to-v5) — **HIGH**
+   - 8.1 [cacheTime Renamed to gcTime](#81-cachetime-renamed-to-gctime)
+   - 8.2 [Query Callbacks Removed](#82-query-callbacks-removed)
+   - 8.3 [New Suspense Hooks](#83-new-suspense-hooks)
 
 ---
 
@@ -1102,6 +1106,142 @@ const { data, error } = useQuery({
   queryFn: () => axios.get('/api/user').then(res => res.data),
 });
 ```
+
+---
+
+## 8. Migration to v5
+
+**Impact: HIGH**
+
+When upgrading from React Query v4 to v5, these are the key breaking changes to address.
+
+### 8.1 cacheTime Renamed to gcTime
+
+**Impact: HIGH (breaking change, find-replace required)**
+
+In v5, `cacheTime` was renamed to `gcTime` to better reflect its purpose: it controls when unused/inactive cache entries are garbage collected.
+
+**v4 (before):**
+
+```typescript
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      cacheTime: 1000 * 60 * 5, // 5 minutes
+    },
+  },
+});
+
+useQuery({
+  queryKey: ['todos'],
+  queryFn: fetchTodos,
+  cacheTime: 1000 * 60 * 10, // 10 minutes
+});
+```
+
+**v5 (after):**
+
+```typescript
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      gcTime: 1000 * 60 * 5, // 5 minutes
+    },
+  },
+});
+
+useQuery({
+  queryKey: ['todos'],
+  queryFn: fetchTodos,
+  gcTime: 1000 * 60 * 10, // 10 minutes
+});
+```
+
+**Migration:** Find and replace all occurrences of `cacheTime` with `gcTime`.
+
+### 8.2 Query Callbacks Removed
+
+**Impact: HIGH (breaking change, refactor required)**
+
+In v5, the `onSuccess`, `onError`, and `onSettled` callbacks were removed from `useQuery`. Use `useEffect` or handle in the component instead.
+
+**Why removed:** These callbacks had subtle timing issues and didn't play well with React's concurrent features.
+
+**v4 (before):**
+
+```typescript
+useQuery({
+  queryKey: ['user', userId],
+  queryFn: () => fetchUser(userId),
+  onSuccess: (data) => {
+    console.log('User loaded:', data);
+    analytics.track('user_loaded');
+  },
+  onError: (error) => {
+    toast.error(error.message);
+  },
+});
+```
+
+**v5 (after):**
+
+```typescript
+const { data, error } = useQuery({
+  queryKey: ['user', userId],
+  queryFn: () => fetchUser(userId),
+});
+
+useEffect(() => {
+  if (data) {
+    console.log('User loaded:', data);
+    analytics.track('user_loaded');
+  }
+}, [data]);
+
+useEffect(() => {
+  if (error) {
+    toast.error(error.message);
+  }
+}, [error]);
+```
+
+**Note:** Mutation callbacks (`onSuccess`, `onError`, `onSettled`) are still available on `useMutation`.
+
+### 8.3 New Suspense Hooks
+
+**Impact: HIGH (new API for suspense mode)**
+
+In v5, suspense mode uses dedicated hooks instead of the `suspense` option. This provides better TypeScript inference since data is guaranteed to be defined.
+
+**v4 (before):**
+
+```typescript
+const { data } = useQuery({
+  queryKey: ['todos'],
+  queryFn: fetchTodos,
+  suspense: true,
+});
+
+// data is TData | undefined (TypeScript doesn't know suspense guarantees data)
+```
+
+**v5 (after):**
+
+```typescript
+import { useSuspenseQuery } from '@tanstack/react-query';
+
+const { data } = useSuspenseQuery({
+  queryKey: ['todos'],
+  queryFn: fetchTodos,
+});
+
+// data is TData (guaranteed by suspense, TypeScript knows this)
+```
+
+**Available suspense hooks in v5:**
+- `useSuspenseQuery` - Single query with suspense
+- `useSuspenseInfiniteQuery` - Infinite query with suspense
+- `useSuspenseQueries` - Multiple queries with suspense
 
 ---
 

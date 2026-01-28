@@ -35,6 +35,7 @@ Reference these guidelines when:
 | 5 | TypeScript Integration | MEDIUM | `typescript-` |
 | 6 | Testing Patterns | MEDIUM | `testing-` |
 | 7 | Common Pitfalls | MEDIUM | `troubleshoot-` |
+| 8 | Migration to v5 | HIGH | `migration-` |
 
 ## Quick Reference
 
@@ -82,6 +83,12 @@ Reference these guidelines when:
 - `troubleshoot-copy-to-state` - Never copy query data to local state
 - `troubleshoot-missing-key-deps` - Include all dependencies in query key
 - `troubleshoot-fetch-not-reject` - Handle HTTP errors with fetch
+
+### 8. Migration to v5 (HIGH)
+
+- `migration-cache-time-to-gc-time` - cacheTime renamed to gcTime
+- `migration-query-callbacks-removed` - onSuccess/onError/onSettled removed from useQuery
+- `migration-suspense-hooks` - New useSuspenseQuery, useSuspenseInfiniteQuery hooks
 
 ## Core Mental Model
 
