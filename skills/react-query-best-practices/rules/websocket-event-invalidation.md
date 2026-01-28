@@ -31,7 +31,7 @@ function useWebSocketSync() {
 }
 ```
 
-**Mailberry pattern (AutomationWebSocketContext):**
+**Example pattern (entity-specific WebSocket handler):**
 
 ```typescript
 const handleMessage = useCallback((message: WebSocketMessage) => {

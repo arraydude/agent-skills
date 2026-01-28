@@ -666,7 +666,7 @@ useQuery({
 
 **Impact: HIGH**
 
-Real-time data synchronization patterns for Mailberry's WebSocket features.
+Real-time data synchronization patterns for WebSocket-driven updates.
 
 ### 4.1 Event-Based Invalidation
 
@@ -696,7 +696,7 @@ function useWebSocketSync() {
 }
 ```
 
-**Mailberry pattern (AutomationWebSocketContext):**
+**Example pattern (entity-specific WebSocket handler):**
 
 ```typescript
 const handleMessage = useCallback((message: WebSocketMessage) => {
