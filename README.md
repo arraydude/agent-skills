@@ -6,6 +6,23 @@ Skills follow the [Agent Skills](https://skills.sh/) format.
 
 ## Available Skills
 
+### validate-pr
+
+Validate AI-generated PR review comments. Checks if AI comments are accurate or hallucinated by cross-referencing with actual code changes.
+
+**Use when:**
+- Reviewing PRs that have AI-generated comments
+- Verifying if AI suggestions are valid or hallucinations
+- Prioritizing which review comments to address
+
+**Usage:**
+```
+/validate-pr 123
+/validate-pr https://github.com/owner/repo/pull/123
+```
+
+---
+
 ### react-query-best-practices
 
 React Query (TanStack Query) best practices, patterns, and troubleshooting. Based on TkDodo's comprehensive blog series.
