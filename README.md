@@ -1,14 +1,14 @@
 # Agent Skills
 
-A collection of skills for AI coding agents. Skills are packaged instructions and scripts that extend agent capabilities.
+A collection of skills and commands for AI coding agents.
 
-Skills follow the [Agent Skills](https://skills.sh/) format.
+## Skills (skills.sh format)
 
-## Available Skills
+Skills auto-activate when relevant tasks are detected. They follow the [Agent Skills](https://skills.sh/) format.
 
 ### react-query-best-practices
 
-React Query (TanStack Query) best practices, patterns, and troubleshooting. Based on TkDodo's comprehensive blog series.
+React Query **v4** (TanStack Query) best practices, patterns, and troubleshooting. Based on TkDodo's comprehensive blog series.
 
 **Use when:**
 - Implementing new queries or mutations
@@ -27,40 +27,73 @@ React Query (TanStack Query) best practices, patterns, and troubleshooting. Base
 - Testing Patterns (Medium)
 - Common Pitfalls (Medium)
 
-## Installation
+## Claude Code Commands
 
-```bash
-npx skills add arraydude/agent-skills
+Commands require explicit invocation via `/command-name`. They use Claude Code's native command format.
+
+### validate-pr
+
+Validate AI-generated PR review comments. Checks if AI comments are accurate or hallucinated by cross-referencing with actual code changes.
+
+**Prerequisites:** Requires `gh` CLI installed and authenticated.
+
+**Usage:**
+```
+/validate-pr 123
+/validate-pr https://github.com/owner/repo/pull/123
 ```
 
-Or install a specific skill:
+## Installation
+
+### Skills (skills.sh)
+
+Install via the skills CLI:
 
 ```bash
 npx skills add arraydude/agent-skills/react-query-best-practices
 ```
 
+### Claude Code Commands
+
+Copy the `.claude/commands/` directory to your project:
+
+```bash
+# Copy all commands
+cp -r .claude/commands/ /path/to/your/project/.claude/commands/
+
+# Or copy a specific command
+cp .claude/commands/validate-pr.md /path/to/your/project/.claude/commands/
+```
+
 ## Usage
 
-Skills are automatically available once installed. The agent will use them when relevant tasks are detected.
-
-**Examples:**
+**Skills** are automatically available once installed. The agent will use them when relevant tasks are detected:
 ```
 Help me set up React Query with proper caching
-```
-```
 Review this useQuery implementation
-```
-```
 How should I handle WebSocket updates with React Query?
 ```
 
-## Skill Structure
+**Commands** require explicit invocation with the `/` prefix:
+```
+/validate-pr 123
+```
+
+## Structure
+
+### Skills (skills.sh format)
 
 Each skill contains:
 - `SKILL.md` - Instructions for the agent
 - `AGENTS.md` - Full compiled document with all rules expanded
 - `rules/` - Individual rule files with code examples
 - `metadata.json` - Version and reference information
+
+### Claude Code Commands
+
+Commands are stored in `.claude/commands/` as Markdown files with optional frontmatter:
+- `*.md` - Command file with instructions
+- Frontmatter can specify `allowed-tools` and other metadata
 
 ## License
 
