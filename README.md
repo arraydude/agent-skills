@@ -50,7 +50,7 @@ Validate AI-generated PR review comments. Checks if AI comments are accurate or 
 Install via the skills CLI:
 
 ```bash
-npx skills add arraydude/agent-skills/react-query-best-practices
+npx skills add arraydude/agent-skills --skill react-query-best-practices
 ```
 
 ### Claude Code Commands
