@@ -8,7 +8,7 @@ Skills auto-activate when relevant tasks are detected. They follow the [Agent Sk
 
 ### react-query-best-practices
 
-React Query (TanStack Query) best practices, patterns, and troubleshooting. Based on TkDodo's comprehensive blog series.
+React Query **v4** (TanStack Query) best practices, patterns, and troubleshooting. Based on TkDodo's comprehensive blog series.
 
 **Use when:**
 - Implementing new queries or mutations

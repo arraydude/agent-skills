@@ -1,15 +1,18 @@
 ---
 name: react-query-best-practices
-description: React Query (TanStack Query) best practices, patterns, and troubleshooting. Use when working with useQuery, useMutation, query invalidation, caching, WebSocket integration, or any async state management in React. Based on TkDodo's comprehensive blog series.
+description: React Query v4 (TanStack Query) best practices, patterns, and troubleshooting. Use when working with useQuery, useMutation, query invalidation, caching, WebSocket integration, or any async state management in React. Based on TkDodo's comprehensive blog series.
 license: MIT
 metadata:
   author: arraydude
   version: "1.0.0"
+  reactQueryVersion: "4.x"
 ---
 
 # React Query Best Practices
 
-Comprehensive guide for React Query (TanStack Query) based on TkDodo's authoritative blog series. Contains 24 rules across 7 categories, prioritized by impact.
+> **Important:** This guide targets **React Query v4**. Some patterns may differ in v5.
+
+Comprehensive guide for React Query v4 (TanStack Query) based on TkDodo's authoritative blog series. Contains 24 rules across 7 categories, prioritized by impact.
 
 ## When to Apply
 

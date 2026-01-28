@@ -1,14 +1,16 @@
 # React Query Best Practices
 
-**Version 1.0.0**
+**Version 1.0.0** | **React Query v4**
 Based on TkDodo's Blog Series
 January 2026
 
+> **Important:** This guide targets **React Query v4**. Some patterns may differ in v5.
+
 > **Note:**
 > This document is mainly for agents and LLMs to follow when maintaining,
-> generating, or refactoring React Query code in Mailberry. Humans
-> may also find it useful, but guidance here is optimized for automation
-> and consistency by AI-assisted workflows.
+> generating, or refactoring React Query codebases. Humans may also find
+> it useful, but guidance here is optimized for automation and consistency
+> by AI-assisted workflows.
 
 ---
 
