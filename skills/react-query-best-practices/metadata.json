@@ -1,0 +1,15 @@
+{
+  "version": "1.0.0",
+  "organization": "arraydude",
+  "date": "January 2026",
+  "abstract": "Comprehensive guide for React Query (TanStack Query) based on TkDodo's authoritative blog series. Contains 24 rules across 7 categories, prioritized by impact from critical (query keys, mutations) to incremental (testing, troubleshooting). Each rule includes detailed explanations, real-world examples comparing incorrect vs. correct implementations, and specific impact metrics to guide automated refactoring and code generation.",
+  "references": [
+    "https://tanstack.com/query/latest",
+    "https://tkdodo.eu/blog/practical-react-query",
+    "https://tkdodo.eu/blog/react-query-data-transformations",
+    "https://tkdodo.eu/blog/react-query-render-optimizations",
+    "https://tkdodo.eu/blog/effective-react-query-keys",
+    "https://tkdodo.eu/blog/testing-react-query",
+    "https://tkdodo.eu/blog/practical-react-query-webocket"
+  ]
+}
