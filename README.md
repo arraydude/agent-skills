@@ -27,6 +27,26 @@ React Query **v4** (TanStack Query) best practices, patterns, and troubleshootin
 - Testing Patterns (Medium)
 - Common Pitfalls (Medium)
 
+### feature-workflow
+
+Feature planning, specification, phased implementation, progress tracking, per-phase PRs, and archival workflow.
+
+**Use when:**
+- Starting a new feature or migration
+- Creating or updating a spec document
+- Breaking work into implementation phases
+- Tracking progress within a spec
+- Deciding PR scope and branch strategy
+- Archiving completed specs
+
+**Categories covered:**
+- Spec Structure & Content (Critical)
+- Phase Design (Critical)
+- Progress Tracking (High)
+- PR Strategy (High)
+- Archival (Medium)
+- Workflow Collaboration (Medium)
+
 ## Claude Code Commands
 
 Commands require explicit invocation via `/command-name`. They use Claude Code's native command format.
@@ -51,6 +71,7 @@ Install via the skills CLI:
 
 ```bash
 npx skills add arraydude/agent-skills --skill react-query-best-practices
+npx skills add arraydude/agent-skills --skill feature-workflow
 ```
 
 ### Claude Code Commands
