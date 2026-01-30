@@ -1,0 +1,34 @@
+# Agent-specific skill directories (auto-created by `npx skills add`)
+# Source of truth is .agents/skills/ — agent symlinks are created on install
+.agent/
+.cline/
+.codebuddy/
+.codex/
+.commandcode/
+.continue/
+.crush/
+.cursor/
+.factory/
+.gemini/
+.github/skills/
+.goose/
+.junie/
+.kilocode/
+.kiro/
+.kode/
+.mcpjam/
+.mux/
+.neovate/
+.opencode/
+.openhands/
+.pi/
+.pochi/
+.qoder/
+.qwen/
+.roo/
+.trae/
+.windsurf/
+.zencoder/
+
+# Local settings
+.claude/settings.local.json
