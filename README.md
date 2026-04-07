@@ -27,6 +27,28 @@ React Query **v4** (TanStack Query) best practices, patterns, and troubleshootin
 - Testing Patterns (Medium)
 - Common Pitfalls (Medium)
 
+### smc-crt-analysis
+
+SMC + CRT (Smart Money Concepts + Candle Range Theory) technical analysis framework for institutional order flow analysis.
+
+**Use when:**
+- Analyzing any asset (stocks, crypto, forex) using SMC/CRT
+- Identifying market structure, order blocks, or liquidity sweeps
+- Reading price action with institutional flow concepts
+- Planning entries/exits with sniper or swing setups
+- Identifying manipulation patterns on any timeframe
+
+**Categories covered:**
+- Market Structure (Critical)
+- Liquidity Mapping (Critical)
+- CRT - Candle Range Theory (Critical)
+- Order Blocks & POIs (High)
+- Premium / Discount Zones (High)
+- Risk Management (High)
+- SMT Divergence (Medium)
+- Time & Price Alignment (Medium)
+- IPDA Cycles (Medium)
+
 ### feature-workflow
 
 Feature planning, specification, phased implementation, progress tracking, per-phase PRs, and archival workflow.
@@ -71,6 +93,7 @@ Install via the skills CLI:
 
 ```bash
 npx skills add arraydude/agent-skills --skill react-query-best-practices
+npx skills add arraydude/agent-skills --skill smc-crt-analysis
 npx skills add arraydude/agent-skills --skill feature-workflow
 ```
 
