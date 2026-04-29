@@ -86,9 +86,20 @@ Reference these guidelines when:
 
 ### 8. Migration to v5 (HIGH)
 
+- `migration-single-signature` - All hooks now take a single object argument
+- `migration-status-pending` - status 'loading' → 'pending'; isLoading semantics changed
 - `migration-cache-time-to-gc-time` - cacheTime renamed to gcTime
+- `migration-keep-previous-data` - keepPreviousData → placeholderData with identity fn
 - `migration-query-callbacks-removed` - onSuccess/onError/onSettled removed from useQuery
 - `migration-suspense-hooks` - New useSuspenseQuery, useSuspenseInfiniteQuery hooks
+- `migration-throw-on-error` - useErrorBoundary renamed to throwOnError
+- `migration-remove-method` - query.remove() removed; use queryClient.removeQueries()
+- `migration-initial-page-param` - initialPageParam now required for infinite queries
+- `migration-refetch-page-to-max-pages` - refetchPage replaced by maxPages
+- `migration-hydration-boundary` - Hydrate component renamed to HydrationBoundary
+- `migration-refetch-interval-callback` - refetchInterval callback now receives only query
+- `migration-context-to-query-client` - context prop removed; pass queryClient directly
+- `migration-misc-breaking-changes` - React 18 min, server retry=0, hashKey, isDataEqual, etc.
 
 ## Core Mental Model
 
