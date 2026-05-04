@@ -8,7 +8,7 @@
 
 ## Abstract
 
-This guide covers the complete workflow for planning, specifying, implementing, and archiving features. It codifies a battle-tested process derived from 18+ completed feature specs, covering spec creation, phased implementation, progress tracking, PR strategy, and archival. Contains 18 rules across 6 categories.
+This guide covers the complete workflow for planning, specifying, implementing, and archiving features. It codifies a battle-tested process derived from 18+ completed feature specs, covering spec creation, phased implementation, progress tracking, PR strategy, and archival. Contains 19 rules across 6 categories.
 
 ---
 
@@ -28,6 +28,7 @@ This guide covers the complete workflow for planning, specifying, implementing, 
    - [3.2 Write Completion Reports Per Phase](#32-write-completion-reports-per-phase)
    - [3.3 Include Before/After Metrics Tables](#33-include-beforeafter-metrics-tables)
 4. [PR Strategy](#4-pr-strategy) -- **HIGH**
+   - [4.0 Feature PRs Always Target develop, Never main](#40-feature-prs-always-target-develop-never-main) -- **CRITICAL**
    - [4.1 One PR Per Phase for Reviewability](#41-one-pr-per-phase-for-reviewability)
    - [4.2 Branch Naming Follows GitFlow Conventions](#42-branch-naming-follows-gitflow-conventions)
    - [4.3 Keep PRs Focused With Clear Scope Documentation](#43-keep-prs-focused-with-clear-scope-documentation)
@@ -401,6 +402,37 @@ Every spec should include a metrics table. Update with actual values after imple
 ---
 
 ## 4. PR Strategy
+
+### 4.0 Feature PRs Always Target `develop`, Never `main`
+
+**Impact:** CRITICAL
+
+Every PR opened from a `feature/*` branch must target `develop`. Only release branches and hotfixes are allowed to target `main`.
+
+**Why:** This repo follows GitFlow. `main` represents released code; `develop` is the integration branch. Merging a feature directly into `main` skips the release boundary, can ship unreleased work, and desyncs `develop` from `main`.
+
+**Branch → target table:**
+
+| Branch type           | Branched from | PR targets |
+| --------------------- | ------------- | ---------- |
+| `feature/*`           | `develop`     | `develop`  |
+| `feature/*-phase<N>`  | `develop`     | `develop`  |
+| `release/YYYY-MM-DD`  | `develop`     | `main` (then back-merge to `develop`) |
+| `hotfix/*`            | `main`        | `main` (then back-merge to `develop`) |
+
+**Always pass `--base develop` explicitly:**
+
+```bash
+git checkout develop && git pull
+git checkout -b feature/sender-api-migration
+# ...commits...
+gh pr create --base develop --head feature/sender-api-migration \
+  --title "Sender API - Phase 1"
+```
+
+`gh pr create` defaults to the repo's default branch (often `main`) — never rely on the default. If a PR is mistakenly opened against `main`, fix it with `gh pr edit <num> --base develop`.
+
+---
 
 ### 4.1 One PR Per Phase for Reviewability
 

@@ -49,3 +49,5 @@ PR 4: "Sender API - Phase 3: V1 cleanup"
 
 **PR title format:**
 `"<Feature> - Phase N: <Description>"`
+
+**Target branch:** Every phase PR targets `develop`. Always pass `--base develop` to `gh pr create`. See `pr-target-develop-branch.md`.

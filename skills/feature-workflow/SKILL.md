@@ -9,7 +9,7 @@ metadata:
 
 # Feature Workflow
 
-Comprehensive guide for planning, specifying, implementing, and archiving features. Contains 18 rules across 6 categories, derived from 18+ completed feature specs.
+Comprehensive guide for planning, specifying, implementing, and archiving features. Contains 19 rules across 6 categories, derived from 18+ completed feature specs.
 
 ## When to Apply
 
@@ -55,6 +55,7 @@ Reference these guidelines when:
 
 ### 4. PR Strategy (HIGH)
 
+- `pr-target-develop-branch` - **CRITICAL**: feature PRs always target `develop`, never `main`
 - `pr-per-phase-strategy` - One PR per phase for reviewability
 - `pr-branch-naming` - Branch naming follows GitFlow conventions
 - `pr-scope-and-review` - Keep PRs focused with clear scope documentation

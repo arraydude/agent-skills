@@ -9,6 +9,8 @@ tags: pr, branch, gitflow, naming
 
 Branch naming follows GitFlow conventions for consistency and automation.
 
+> **Critical:** Every `feature/*` branch is created from `develop` and its PR targets `develop` — never `main`. See `pr-target-develop-branch.md` for full rationale and `gh` commands.
+
 **Incorrect (inconsistent naming):**
 
 ```
@@ -38,4 +40,4 @@ hotfix/sender-polling-fix
 - Releases to main: **Merge commit** (preserves release boundary)
 - Hotfixes to main: **Merge commit**, then sync to develop
 
-**All feature branches target `develop`**, not `main`.
+**All feature branches target `develop`**, not `main`. When opening the PR, always pass `--base develop` to `gh pr create` — do not rely on the repository default branch.
