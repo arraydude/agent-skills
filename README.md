@@ -69,6 +69,24 @@ Feature planning, specification, phased implementation, progress tracking, per-p
 - Archival (Medium)
 - Workflow Collaboration (Medium)
 
+### validate-pr
+
+Validate AI-generated PR review comments. Checks whether AI comments are accurate or hallucinated by cross-referencing each one against the actual code changes, then reports a prioritized summary.
+
+**Prerequisites:** Requires `gh` CLI installed and authenticated.
+
+**Use when:**
+- Checking AI/bot review comments on a PR for accuracy
+- Triaging which review feedback is worth addressing before merge
+- Separating genuine findings from hallucinations or misread intent
+- Producing a prioritized action list from a noisy automated review
+
+**Categories covered:**
+- Setup & Input (Critical)
+- Data Gathering (Critical)
+- Validation (Critical)
+- Output (High)
+
 ## Claude Code Commands
 
 Commands require explicit invocation via `/command-name`. They use Claude Code's native command format.
@@ -95,6 +113,7 @@ Install via the skills CLI:
 npx skills add arraydude/agent-skills --skill react-query-best-practices
 npx skills add arraydude/agent-skills --skill smc-crt-analysis
 npx skills add arraydude/agent-skills --skill feature-workflow
+npx skills add arraydude/agent-skills --skill validate-pr
 ```
 
 ### Claude Code Commands
