@@ -30,10 +30,16 @@ export default [
 ];
 ```
 
-**Correct (legacy `.eslintrc`):**
+**Correct (v5, legacy `.eslintrc`):**
 
 ```json
 { "extends": ["plugin:@tanstack/query/recommended"] }
+```
+
+**Correct (v4, `.eslintrc`):**
+
+```json
+{ "extends": ["plugin:@tanstack/eslint-plugin-query/recommended"] }
 ```
 
 Rules in the current (v5) plugin. The release that added each rule is in parentheses where the changelog records it:
@@ -51,6 +57,6 @@ Rules in the current (v5) plugin. The release that added each rule is in parenth
 
 - `exhaustive-deps` accepts `allowlist.variables` and `allowlist.types` for stable clients and config objects.
 - Turn off `no-rest-destructuring` only if you set `notifyOnChangeProps` manually.
-- v4: the v4 plugin had a `prefer-query-object-syntax` rule, which v5 removed because object syntax is the only form. The rest of the v4 rule set is not verified here; check the v4 ESLint docs before enabling rules from the table above.
+- v4: the plugin ships four rules, all in `recommended`: `exhaustive-deps`, `stable-query-client`, `prefer-query-object-syntax` and `no-deprecated-options`. The last two flag code v5 removes (positional signatures, and options such as `onSuccess` on `useQuery`), so turning them on before a v5 upgrade shrinks the migration. v5 dropped `prefer-query-object-syntax`: delete it from the config when upgrading.
 
 Reference: [ESLint Plugin Query](https://tanstack.com/query/v5/docs/eslint/eslint-plugin-query) · [v4 ESLint Plugin Query](https://tanstack.com/query/v4/docs/eslint/eslint-plugin-query)

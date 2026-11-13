@@ -39,6 +39,8 @@ npx jscodeshift@latest ./src --extensions=ts,tsx --parser=tsx \
   --transform=./node_modules/@tanstack/react-query/build/codemods/v5/keep-previous-data/keep-previous-data.cjs
 ```
 
+The codemod moves the option only: rename `isPreviousData` to `isPlaceholderData` by hand.
+
 **Behaviour differences to check after migrating:**
 - `placeholderData` always puts the query in `success` status. `keepPreviousData` reported the previous query's status, which could be `error` after a failed background refetch.
 - `dataUpdatedAt` stays `0` while placeholder data is shown. `keepPreviousData` exposed the previous data's timestamp.

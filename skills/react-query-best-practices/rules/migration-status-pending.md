@@ -40,6 +40,6 @@ npx jscodeshift@latest ./src --extensions=ts,tsx --parser=tsx \
 ```
 
 - Review every existing `isLoading` by hand. A disabled query (`enabled: false`) is `isPending` but not `isLoading`, so swapping the names blindly changes what renders.
-- Replace `status === 'loading'` with `status === 'pending'` in mutation checks too.
+- The codemod renames the `isLoading` flag only. Replace `status === 'loading'` with `status === 'pending'` by hand, in query and mutation checks alike.
 
 Reference: [Migrating to v5](https://tanstack.com/query/v5/docs/framework/react/guides/migrating-to-v5#status-loading-has-been-changed-to-status-pending-and-isloading-has-been-changed-to-ispending-and-isinitialloading-has-now-been-renamed-to-isloading)

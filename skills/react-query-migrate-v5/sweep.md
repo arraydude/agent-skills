@@ -12,15 +12,15 @@ behaviour. They go in the step 7 report even when the sweep finds nothing.
 
 | Rule | Scope | Search | Runtime |
 |---|---|---|---|
-| `migration-single-signature` | 4.x | `use(Query\|Queries\|InfiniteQuery\|Mutation\|IsFetching\|IsMutating)\(\s*[\['"\w]` · `(invalidate\|refetch\|cancel\|remove\|reset)Queries\(\s*[\['"\w]` · `getQuery(Data\|State)\([^)]*,` | |
-| `migration-status-pending` | 4.x | `isLoading\|isInitialLoading\|['"]loading['"]` | runtime |
+| `migration-single-signature` | 4.x | `use(Query\|Queries\|InfiniteQuery\|Mutation\|IsFetching\|IsMutating)\(\s*[\['"\w]` · `(invalidate\|refetch\|cancel\|remove\|reset)Queries\(\s*[\['"\w]` · `getQuery(Data\|State)(<[^>]*>)?\(\s*\[[^\]]*\]\s*,` · `(fetch\|prefetch)(Infinite)?Query\(\s*\[\|ensureQueryData\(\s*\[` | |
+| `migration-status-pending` | 4.x | `isLoading\|isInitialLoading\|['"]loading['"]` (the codemod leaves status strings as they are) | runtime |
 | `migration-cache-time-to-gc-time` | 4.x | `cacheTime` | |
 | `migration-throw-on-error` | 4.x | `useErrorBoundary` | |
-| `migration-keep-previous-data` | 4.x | `keepPreviousData\|isPreviousData` | runtime |
-| `migration-query-callbacks-removed` | 4.x | `on(Success\|Error\|Settled)\s*[:(]` (hits inside `useMutation` are fine) | runtime |
+| `migration-keep-previous-data` | 4.x | `keepPreviousData\|isPreviousData` (the codemod leaves the flag name as it is) | runtime |
+| `migration-query-callbacks-removed` | 4.x | `on(Success\|Error\|Settled)\s*[:(]` (hits inside mutation options are fine) | runtime |
 | `migration-suspense-hooks` | 4.x | `suspense:\s*true` | |
-| `migration-hydration-boundary` | 4.x | `\bHydrate\b\|useHydrate` | runtime |
-| `migration-initial-page-param` | 4.x | `useInfiniteQuery\|InfiniteQuery\(\|infiniteQueryOptions` (check `initialPageParam`) · `fetchNextPage\(\s*\{` | |
+| `migration-hydration-boundary` | 4.x | `\bHydrate\b\|useHydrate\|HydrationBoundary` | runtime |
+| `migration-initial-page-param` | 4.x | `useInfiniteQuery\|InfiniteQuery\(\|infiniteQueryOptions` (each needs an initial page param) · `fetchNextPage\(\s*\{` | |
 | `migration-refetch-page-to-max-pages` | 4.x | `refetchPage` | |
 | `migration-error-type-default` | 4.x | `useQuery<\|useMutation<\|error as \|instanceof Error` | |
 | `migration-remove-method` | 4.x | `\.remove\(\)` | |

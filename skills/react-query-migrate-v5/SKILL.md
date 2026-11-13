@@ -64,8 +64,8 @@ npx jscodeshift@latest ./src --extensions=ts,tsx --parser=tsx \
 Releases before 5.104 keep the codemods under `build/codemods/src/v5/`: use
 that path when the first one is missing. Use `--extensions=js,jsx` without
 `--parser=tsx` for JavaScript sources. Every
-usage a codemod logs as skipped goes on the step 5 worklist with its file and
-line.
+usage a codemod logs as skipped goes on the step 5 worklist with its file (and
+line, when the log gives one).
 
 Done when all five ran and their skipped usages are on the worklist.
 

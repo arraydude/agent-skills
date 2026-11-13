@@ -30,7 +30,7 @@ v5 launched with a TypeScript 4.7 floor, but it now follows DefinitelyTyped's tw
 ```
 
 - React 18 is the hard floor for all of v5 (`useSyncExternalStore`). React 19 is supported since 5.39.
-- Type changes are treated as non-breaking and can land in any release (for example the 5.102 `NoInfer` revert on `useQuery` return types). Re-run the type check on every bump.
+- Type changes are treated as non-breaking and can land in any release. Example: `useQuery` has returned `UseQueryResult<NoInfer<TData>>` since 5.75.5 (#8683). In 5.100.13 that switched to the built-in `NoInfer` (#10593), which broke narrowing of a discriminated-union `data` (issue #11018). 5.102 reverted it (#11245). If `data` narrowing broke on 5.100.13–5.101.x, upgrade to 5.102 or later. Re-run the type check on every bump.
 - Browser targets: Chrome/Edge 91, Firefox 90, Safari/iOS 15, Opera 77. Transpile `node_modules` yourself for older browsers.
 
 Reference: [TypeScript](https://tanstack.com/query/v5/docs/framework/react/typescript) · [Installation](https://tanstack.com/query/v5/docs/framework/react/installation#requirements)

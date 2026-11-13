@@ -499,7 +499,7 @@ const { data: groupName } = useQuery({ ...groupOptions(1), select: (data) => dat
 - `select` runs on data that is already cached, so it is not the place to signal errors. Validate in the `queryFn` if bad data should fail the query. The docs warn that a `select` returning an error leaves `data` undefined while `isSuccess` is `true`. Since v5.102 (#11011, #11161), a throwing `select` also resets `isPlaceholderData`, and since v5.107 (#12540) repeated identical select errors no longer cause render loops.
 - In `useQueries`, an inline `select` cannot infer its argument type and falls back to `unknown`. Annotate it, or use `queryOptions` (v5).
 
-Reference: [Render Optimizations](https://tanstack.com/query/v5/docs/framework/react/guides/render-optimizations) · [Query Options](https://tanstack.com/query/v5/docs/framework/react/guides/query-options) · [v4 Render Optimizations](https://tanstack.com/query/v4/docs/framework/react/guides/render-optimizations)
+Reference: [Render Optimizations](https://tanstack.com/query/v5/docs/framework/react/guides/render-optimizations) · [Query Options](https://tanstack.com/query/v5/docs/framework/react/guides/query-options) · [v4 useQuery: select](https://tanstack.com/query/v4/docs/framework/react/reference/useQuery)
 
 ### 1.9 Placeholder vs Initial Data
 
@@ -606,7 +606,7 @@ useEffect(() => { /* ... */ }, [todosQuery.data]); // Correct
 - `notifyOnChangeProps` overrides tracking: set it to a list of fields, or `'all'` to turn the optimization off. With a manual list, you are responsible for choosing the fields.
 - The ESLint rules `no-rest-destructuring` and `no-unstable-deps` (both in the v5 plugin's recommended config) catch these two mistakes (see `tooling-eslint-plugin`).
 
-Reference: [Render Optimizations](https://tanstack.com/query/v5/docs/framework/react/guides/render-optimizations) · [no-rest-destructuring](https://tanstack.com/query/v5/docs/eslint/no-rest-destructuring) · [no-unstable-deps](https://tanstack.com/query/v5/docs/eslint/no-unstable-deps) · [v4 Render Optimizations](https://tanstack.com/query/v4/docs/framework/react/guides/render-optimizations)
+Reference: [Render Optimizations](https://tanstack.com/query/v5/docs/framework/react/guides/render-optimizations) · [no-rest-destructuring](https://tanstack.com/query/v5/docs/eslint/no-rest-destructuring) · [no-unstable-deps](https://tanstack.com/query/v5/docs/eslint/no-unstable-deps) · [v4 useQuery: notifyOnChangeProps](https://tanstack.com/query/v4/docs/framework/react/reference/useQuery)
 
 ## 2. Mutations & Updates
 
@@ -2006,10 +2006,16 @@ export default [
 ];
 ```
 
-**Correct (legacy `.eslintrc`):**
+**Correct (v5, legacy `.eslintrc`):**
 
 ```json
 { "extends": ["plugin:@tanstack/query/recommended"] }
+```
+
+**Correct (v4, `.eslintrc`):**
+
+```json
+{ "extends": ["plugin:@tanstack/eslint-plugin-query/recommended"] }
 ```
 
 Rules in the current (v5) plugin. The release that added each rule is in parentheses where the changelog records it:
@@ -2027,7 +2033,7 @@ Rules in the current (v5) plugin. The release that added each rule is in parenth
 
 - `exhaustive-deps` accepts `allowlist.variables` and `allowlist.types` for stable clients and config objects.
 - Turn off `no-rest-destructuring` only if you set `notifyOnChangeProps` manually.
-- v4: the v4 plugin had a `prefer-query-object-syntax` rule, which v5 removed because object syntax is the only form. The rest of the v4 rule set is not verified here; check the v4 ESLint docs before enabling rules from the table above.
+- v4: the plugin ships four rules, all in `recommended`: `exhaustive-deps`, `stable-query-client`, `prefer-query-object-syntax` and `no-deprecated-options`. The last two flag code v5 removes (positional signatures, and options such as `onSuccess` on `useQuery`), so turning them on before a v5 upgrade shrinks the migration. v5 dropped `prefer-query-object-syntax`: delete it from the config when upgrading.
 
 Reference: [ESLint Plugin Query](https://tanstack.com/query/v5/docs/eslint/eslint-plugin-query) · [v4 ESLint Plugin Query](https://tanstack.com/query/v4/docs/eslint/eslint-plugin-query)
 
@@ -2178,7 +2184,7 @@ npx jscodeshift@latest ./src --extensions=ts,tsx --parser=tsx \
 ```
 
 - `--parser=tsx` is required for TypeScript files, or the transform is not applied. For `.js`/`.jsx`, use `--extensions=js,jsx` and drop the parser flag.
-- The codemod skips calls whose first argument is already an object with `queryKey`/`mutationKey`. It logs file:line for calls it cannot infer, so fix those by hand. Run prettier/eslint afterwards.
+- The codemod skips calls whose first argument is already an object with `queryKey`/`mutationKey`. Calls it cannot infer are logged, sometimes with only the file name ("An unknown error occurred while processing"), so fix those by hand. On 5.107.1 it left positional `useInfiniteQuery`, `prefetchQuery`/`fetchQuery` and `getQueryData(key, filters)` calls untouched. Run prettier/eslint afterwards.
 - The codemod does not move `fetchQuery`/`prefetchQuery`/`ensureQueryData` to `query()`; see `query-imperative-query-method`.
 
 Reference: [Migrating to v5](https://tanstack.com/query/v5/docs/framework/react/guides/migrating-to-v5#supports-a-single-signature-one-object)
@@ -2219,7 +2225,7 @@ npx jscodeshift@latest ./src --extensions=ts,tsx --parser=tsx \
 ```
 
 - Review every existing `isLoading` by hand. A disabled query (`enabled: false`) is `isPending` but not `isLoading`, so swapping the names blindly changes what renders.
-- Replace `status === 'loading'` with `status === 'pending'` in mutation checks too.
+- The codemod renames the `isLoading` flag only. Replace `status === 'loading'` with `status === 'pending'` by hand, in query and mutation checks alike.
 
 Reference: [Migrating to v5](https://tanstack.com/query/v5/docs/framework/react/guides/migrating-to-v5#status-loading-has-been-changed-to-status-pending-and-isloading-has-been-changed-to-ispending-and-isinitialloading-has-now-been-renamed-to-isloading)
 
@@ -2334,6 +2340,8 @@ const { data, isPlaceholderData } = useQuery({
 npx jscodeshift@latest ./src --extensions=ts,tsx --parser=tsx \
   --transform=./node_modules/@tanstack/react-query/build/codemods/v5/keep-previous-data/keep-previous-data.cjs
 ```
+
+The codemod moves the option only: rename `isPreviousData` to `isPlaceholderData` by hand.
 
 **Behaviour differences to check after migrating:**
 - `placeholderData` always puts the query in `success` status. `keepPreviousData` reported the previous query's status, which could be `error` after a failed background refetch.
@@ -3028,7 +3036,7 @@ v5 launched with a TypeScript 4.7 floor, but it now follows DefinitelyTyped's tw
 ```
 
 - React 18 is the hard floor for all of v5 (`useSyncExternalStore`). React 19 is supported since 5.39.
-- Type changes are treated as non-breaking and can land in any release (for example the 5.102 `NoInfer` revert on `useQuery` return types). Re-run the type check on every bump.
+- Type changes are treated as non-breaking and can land in any release. Example: `useQuery` has returned `UseQueryResult<NoInfer<TData>>` since 5.75.5 (#8683). In 5.100.13 that switched to the built-in `NoInfer` (#10593), which broke narrowing of a discriminated-union `data` (issue #11018). 5.102 reverted it (#11245). If `data` narrowing broke on 5.100.13–5.101.x, upgrade to 5.102 or later. Re-run the type check on every bump.
 - Browser targets: Chrome/Edge 91, Firefox 90, Safari/iOS 15, Opera 77. Transpile `node_modules` yourself for older browsers.
 
 Reference: [TypeScript](https://tanstack.com/query/v5/docs/framework/react/typescript) · [Installation](https://tanstack.com/query/v5/docs/framework/react/installation#requirements)
