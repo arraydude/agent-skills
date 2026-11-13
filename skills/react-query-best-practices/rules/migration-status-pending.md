@@ -1,43 +1,45 @@
 ---
 title: Status "loading" Renamed to "pending"
 impact: HIGH
-impactDescription: breaking change, find-replace required across all queries
-tags: migration, v5, status, isPending, isLoading
+impactDescription: breaking change, and isLoading silently changes meaning
+tags: migration, v5, status, isPending, isLoading, codemod
+versions: v4, v5
 ---
 
 ## Status "loading" Renamed to "pending"
 
-In v5, the query status `'loading'` was renamed to `'pending'`, and the derived flag `isLoading` was redefined. The previous `isInitialLoading` is now `isLoading`.
-
-**Why:** The status `'pending'` more accurately reflects that the query has no data yet (it isn't necessarily fetching). `isLoading` now means "pending AND fetching", matching the common intuition.
+In v5, `status: 'loading'` became `'pending'` and `isLoading` became `isPending`, for queries and mutations alike. A new `isLoading` on queries means `isPending && isFetching`, which is what v4's `isInitialLoading` meant. `isInitialLoading` is deprecated.
 
 **v4 (before):**
 
 ```typescript
-const { status, isLoading, isInitialLoading } = useQuery({
-  queryKey: ['todos'],
-  queryFn: fetchTodos,
-});
-
+const { status, isLoading, isInitialLoading } = useQuery({ queryKey, queryFn });
 if (status === 'loading') return <Spinner />;
 if (isInitialLoading) return <Spinner />;
+
+const mutation = useMutation({ mutationFn });
+<button disabled={mutation.isLoading} />;
 ```
 
 **v5 (after):**
 
 ```typescript
-const { status, isPending, isLoading } = useQuery({
-  queryKey: ['todos'],
-  queryFn: fetchTodos,
-});
-
+const { status, isPending, isLoading } = useQuery({ queryKey, queryFn });
 if (status === 'pending') return <Spinner />;
-// isLoading in v5 === isInitialLoading in v4 (pending AND fetching)
-if (isLoading) return <Spinner />;
+if (isLoading) return <Spinner />; // pending AND fetching (was isInitialLoading)
+
+const mutation = useMutation({ mutationFn });
+<button disabled={mutation.isPending} />;
 ```
 
-**Migration checklist:**
-- Replace `status === 'loading'` with `status === 'pending'`
-- Replace `isInitialLoading` with `isLoading`
-- Audit existing `isLoading` usage — semantics changed (now requires fetching too)
-- Mutations: `isLoading` → `isPending`
+**Codemod (`is-loading`, since 5.9):**
+
+```bash
+npx jscodeshift@latest ./src --extensions=ts,tsx --parser=tsx \
+  --transform=./node_modules/@tanstack/react-query/build/codemods/v5/is-loading/is-loading.cjs
+```
+
+- Review every existing `isLoading` by hand. A disabled query (`enabled: false`) is `isPending` but not `isLoading`, so swapping the names blindly changes what renders.
+- Replace `status === 'loading'` with `status === 'pending'` in mutation checks too.
+
+Reference: [Migrating to v5](https://tanstack.com/query/v5/docs/framework/react/guides/migrating-to-v5#status-loading-has-been-changed-to-status-pending-and-isloading-has-been-changed-to-ispending-and-isinitialloading-has-now-been-renamed-to-isloading)

@@ -2,6 +2,7 @@
 title: remove() Method Removed from useQuery
 impact: MEDIUM
 impactDescription: breaking change, refactor required where used
+versions: v4, v5
 tags: migration, v5, remove, removeQueries
 ---
 
@@ -37,3 +38,5 @@ const handleReset = () => {
   queryClient.removeQueries({ queryKey: ['todos'] });
 };
 ```
+
+Reference: [Migrating to v5](https://tanstack.com/query/v5/docs/framework/react/guides/migrating-to-v5#the-remove-method-has-been-removed-from-usequery)

@@ -3,22 +3,26 @@ title: refetchPage Replaced by maxPages
 impact: MEDIUM
 impactDescription: breaking change for infinite queries
 tags: migration, v5, infinite, refetchPage, maxPages
+versions: v4, v5
 ---
 
 ## refetchPage Replaced by maxPages
 
-In v5, the `refetchPage` function (which let you choose which pages to refetch in an infinite query) was removed. Use the new `maxPages` option to bound the number of pages stored, so refetches stay manageable.
-
-**Why:** Refetching only some pages caused inconsistent data. Bounding the number of pages produces predictable behavior and naturally limits work on refetch.
+v5 removed `refetchPage`, which in v4 chose which pages of an infinite query to refetch. Refetching only some pages could leave the UI inconsistent, and the option also existed on `queryClient.refetchQueries` where it did nothing for normal queries. Use `maxPages` instead: it limits how many pages are stored, and therefore how many are refetched.
 
 **v4 (before):**
 
 ```typescript
 useInfiniteQuery({
   queryKey: ['projects'],
-  queryFn: fetchProjectsPage,
+  queryFn: ({ pageParam = 0 }) => fetchProjectsPage(pageParam),
   getNextPageParam: (lastPage) => lastPage.nextCursor,
-  refetchPage: (_lastPage, index) => index < 2,
+  refetchPage: (_page, index) => index < 2,
+});
+
+queryClient.refetchQueries({
+  queryKey: ['projects'],
+  refetchPage: (_page, index) => index === 0,
 });
 ```
 
@@ -27,11 +31,15 @@ useInfiniteQuery({
 ```typescript
 useInfiniteQuery({
   queryKey: ['projects'],
-  queryFn: fetchProjectsPage,
+  queryFn: ({ pageParam }) => fetchProjectsPage(pageParam),
   initialPageParam: 0,
   getNextPageParam: (lastPage) => lastPage.nextCursor,
+  getPreviousPageParam: (firstPage) => firstPage.prevCursor,
   maxPages: 3,
 });
 ```
 
-**Note:** With `maxPages` set, fetching beyond the limit drops the oldest page. Refetches always include all stored pages.
+- `maxPages` requires a bi-directional list: define **both** `getNextPageParam` and `getPreviousPageParam`. Pages dropped from one end can then be fetched again when the user scrolls back.
+- On refetch, only the stored pages (at most `maxPages`) are refetched, one after another.
+
+Reference: [Migrating to v5](https://tanstack.com/query/v5/docs/framework/react/guides/migrating-to-v5#removed-refetchpage-in-favor-of-maxpages), [Infinite Queries](https://tanstack.com/query/v5/docs/framework/react/guides/infinite-queries#what-if-i-want-to-limit-the-number-of-pages), [v4 Infinite Queries](https://tanstack.com/query/v4/docs/framework/react/guides/infinite-queries)

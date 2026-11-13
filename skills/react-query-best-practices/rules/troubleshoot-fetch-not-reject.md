@@ -1,44 +1,50 @@
 ---
 title: Fetch Not Rejecting on Errors
 impact: HIGH
-impactDescription: silent failures
-tags: troubleshoot, fetch, error, http
+impactDescription: HTTP errors otherwise land in the cache as successful data
+tags: troubleshoot, fetch, error, http, queryFn
+versions: v4, v5
 ---
 
 ## Fetch Not Rejecting on Errors
 
-The fetch API doesn't reject on HTTP errors.
+A query fails only when its `queryFn` throws or returns a rejected promise. `fetch` resolves on 4xx/5xx responses, so check `response.ok` and throw. Otherwise the error body is cached as data, `error` stays `null`, and retries never run.
 
 **Incorrect (404 treated as success):**
 
 ```typescript
-const { data, error } = useQuery({
-  queryKey: ['user'],
-  queryFn: () => fetch('/api/user').then(res => res.json()),
+useQuery({
+  queryKey: ['user', id],
+  queryFn: () => fetch(`/api/users/${id}`).then((res) => res.json()),
 });
-// error is always null even on 404!
 ```
 
-**Correct (check response.ok):**
+**Correct (throw on non-OK responses):**
 
 ```typescript
-const { data, error } = useQuery({
-  queryKey: ['user'],
+useQuery({
+  queryKey: ['user', id],
   queryFn: async () => {
-    const res = await fetch('/api/user');
+    const res = await fetch(`/api/users/${id}`);
     if (!res.ok) {
-      throw new Error(`HTTP error! status: ${res.status}`);
+      throw new Error(`Request failed: ${res.status}`);
     }
     return res.json();
   },
 });
 ```
 
-**Or use axios (rejects automatically):**
+**Correct (a client that rejects by itself, e.g. axios or graphql-request):**
 
 ```typescript
-const { data, error } = useQuery({
-  queryKey: ['user'],
-  queryFn: () => axios.get('/api/user').then(res => res.data),
+useQuery({
+  queryKey: ['user', id],
+  queryFn: () => axios.get(`/api/users/${id}`).then((res) => res.data),
 });
 ```
+
+- Return a value from the `queryFn`. Resolving `undefined` is treated as a failure, so resolve `null` to cache "nothing". The ESLint rule `no-void-query-fn` catches missing returns (requires typed linting).
+- Errors are retried 3 times with exponential backoff on the client before `error` is set. In v5 the in-progress error is exposed as `failureReason` until the last attempt.
+- v5 types `error` as `Error` by default (v4: `unknown`). If you throw something other than an `Error`, set the generic or register a global error type.
+
+Reference: [Query Functions](https://tanstack.com/query/v5/docs/framework/react/guides/query-functions) · [Query Retries](https://tanstack.com/query/v5/docs/framework/react/guides/query-retries) · [v4 Query Functions](https://tanstack.com/query/v4/docs/framework/react/guides/query-functions)

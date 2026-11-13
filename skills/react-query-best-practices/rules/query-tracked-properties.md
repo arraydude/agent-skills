@@ -1,26 +1,43 @@
 ---
 title: Tracked Properties
 impact: LOW
-impactDescription: reduces unnecessary re-renders
-tags: query, optimization, rerender
+impactDescription: avoids re-renders from fields the component never reads
+tags: query, optimization, rerender, eslint
+versions: v4, v5
 ---
 
 ## Tracked Properties
 
-React Query tracks which properties you access during render. Only destructure what you need.
+The query result is a Proxy that records which fields you read. The component re-renders only when one of those fields changes. Read only the fields you need, and never use object rest on the result.
 
-**Incorrect (rest spread tracks all fields):**
-
-```typescript
-// Tracks ALL fields, defeats optimization
-const { data, ...rest } = useQuery({...});
-```
-
-**Correct (explicit destructuring):**
+**Incorrect (rest destructuring subscribes to every field):**
 
 ```typescript
-// Only tracks data and isError
-const { data, isError } = useQuery({...});
+const useTodos = () => {
+  const { data: todos, ...rest } = useQuery({ queryKey: ['todos'], queryFn: fetchTodos });
+  return { todos, ...rest }; // re-renders on every isFetching / isStale change
+};
 ```
 
-The component won't re-render when untracked fields like `isFetching` change.
+**Correct (destructure, or return the result object as-is):**
+
+```typescript
+const { data, isError } = useQuery({ queryKey: ['todos'], queryFn: fetchTodos });
+
+// or keep the proxy intact and let the caller read what it needs
+const useTodos = () => useQuery({ queryKey: ['todos'], queryFn: fetchTodos });
+```
+
+The result object itself is a new reference on every render; only `data` is kept stable. Put the fields you use in hook dependency arrays, not the whole result:
+
+```typescript
+const todosQuery = useQuery({ queryKey: ['todos'], queryFn: fetchTodos });
+
+useEffect(() => { /* ... */ }, [todosQuery]);      // Incorrect: runs every render
+useEffect(() => { /* ... */ }, [todosQuery.data]); // Correct
+```
+
+- `notifyOnChangeProps` overrides tracking: set it to a list of fields, or `'all'` to turn the optimization off. With a manual list, you are responsible for choosing the fields.
+- The ESLint rules `no-rest-destructuring` and `no-unstable-deps` (both in the v5 plugin's recommended config) catch these two mistakes (see `tooling-eslint-plugin`).
+
+Reference: [Render Optimizations](https://tanstack.com/query/v5/docs/framework/react/guides/render-optimizations) · [no-rest-destructuring](https://tanstack.com/query/v5/docs/eslint/no-rest-destructuring) · [no-unstable-deps](https://tanstack.com/query/v5/docs/eslint/no-unstable-deps) · [v4 Render Optimizations](https://tanstack.com/query/v4/docs/framework/react/guides/render-optimizations)

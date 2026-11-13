@@ -1,44 +1,65 @@
 ---
 title: Query Key Factory Pattern
 impact: HIGH
-impactDescription: enables flexible invalidation
-tags: query, keys, factory, pattern
+impactDescription: consistent keys and invalidation at any level of the hierarchy
+tags: query, keys, factory, queryOptions, invalidation
+versions: v4, v5
 ---
 
 ## Query Key Factory Pattern
 
-Use factory functions to generate consistent query keys. Structure: generic to specific.
+Build every key for a feature from one factory, ordered from generic to specific. Then partial-key filters can target all queries, all lists, or a single item. In v5, have the factory return `queryOptions` so each key always travels with its `queryFn`.
 
-**Incorrect (inconsistent key strings):**
+**Incorrect (keys typed by hand in each place):**
 
 ```typescript
-// Scattered key definitions
-useQuery({ queryKey: ['todos'] });
-useQuery({ queryKey: ['todo', id] });
-queryClient.invalidateQueries({ queryKey: ['todos'] }); // Might miss some
+useQuery({ queryKey: ['todos', 'list', filters], queryFn: () => fetchTodos(filters) });
+useQuery({ queryKey: ['todo', id], queryFn: () => fetchTodo(id) }); // 'todo' ≠ 'todos'
+queryClient.invalidateQueries({ queryKey: ['todos'] }); // misses ['todo', id]
 ```
 
-**Correct (centralized key factory):**
+**Correct (v5, factory returns queryOptions):**
 
 ```typescript
-const todoKeys = {
+import { queryOptions } from '@tanstack/react-query';
+
+export const todoQueries = {
+  all: () => ['todos'] as const,
+  lists: () => [...todoQueries.all(), 'list'] as const,
+  list: (filters: Filters) =>
+    queryOptions({
+      queryKey: [...todoQueries.lists(), filters],
+      queryFn: () => fetchTodos(filters),
+    }),
+  detail: (id: number) =>
+    queryOptions({
+      queryKey: [...todoQueries.all(), 'detail', id],
+      queryFn: () => fetchTodo(id),
+    }),
+};
+
+useQuery(todoQueries.detail(id));
+queryClient.invalidateQueries({ queryKey: todoQueries.all() });          // everything
+queryClient.invalidateQueries({ queryKey: todoQueries.lists() });        // all lists
+queryClient.invalidateQueries({ queryKey: todoQueries.detail(5).queryKey }); // one todo
+```
+
+**Correct (v4, plain key factory; `queryOptions` does not exist in v4):**
+
+```typescript
+export const todoKeys = {
   all: ['todos'] as const,
   lists: () => [...todoKeys.all, 'list'] as const,
   list: (filters: Filters) => [...todoKeys.lists(), filters] as const,
-  details: () => [...todoKeys.all, 'detail'] as const,
-  detail: (id: number) => [...todoKeys.details(), id] as const,
+  detail: (id: number) => [...todoKeys.all, 'detail', id] as const,
 };
 
-// Usage
-useQuery({
-  queryKey: todoKeys.detail(todoId),
-  queryFn: () => fetchTodo(todoId),
-});
-
-// Flexible invalidation
-queryClient.invalidateQueries({ queryKey: todoKeys.all });        // All todos
-queryClient.invalidateQueries({ queryKey: todoKeys.lists() });    // All lists
-queryClient.invalidateQueries({ queryKey: todoKeys.detail(5) });  // Specific todo
+useQuery({ queryKey: todoKeys.detail(id), queryFn: () => fetchTodo(id) });
+queryClient.invalidateQueries({ queryKey: todoKeys.lists() });
 ```
 
-The hierarchical structure enables invalidating at any level of specificity.
+- Since 5.103 (#11502), a partial filter with trailing `undefined` items no longer matches shorter keys: `{ queryKey: ['todos', undefined] }` does not match `['todos']`. Build the filter without the trailing `undefined` (e.g. `id == null ? todoQueries.all() : todoQueries.detail(id).queryKey`).
+- The v5 ESLint rule `prefer-query-options` (in `recommended-strict`) flags keys typed by hand in `getQueryData` and `invalidateQueries` when a `queryOptions` factory exists.
+- v5.64+ lets you constrain every key's shape app-wide by registering a `queryKey` type on `Register` (TypeScript guide).
+
+Reference: [Query Keys](https://tanstack.com/query/v5/docs/framework/react/guides/query-keys) · [Query Options](https://tanstack.com/query/v5/docs/framework/react/guides/query-options) · [Filters](https://tanstack.com/query/v5/docs/framework/react/guides/filters) · [v4 Query Keys](https://tanstack.com/query/v4/docs/framework/react/guides/query-keys)

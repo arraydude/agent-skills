@@ -2,6 +2,7 @@
 title: refetchInterval Callback Signature Changed
 impact: LOW
 impactDescription: breaking change for dynamic polling intervals
+versions: v4, v5
 tags: migration, v5, refetchInterval, polling
 ---
 
@@ -32,3 +33,7 @@ useQuery({
     query.state.data?.status === 'done' ? false : 5000,
 });
 ```
+
+- `query.state.data` is the raw cached data: `select` has not run on it.
+
+Reference: [Migrating to v5](https://tanstack.com/query/v5/docs/framework/react/guides/migrating-to-v5#the-refetchinterval-callback-function-only-gets-query-passed)

@@ -1,22 +1,22 @@
 ---
 title: Prefer mutate() Over mutateAsync()
 impact: HIGH
-impactDescription: better error handling
-tags: mutation, mutate, async, error
+impactDescription: no unhandled promise rejections from fire-and-forget calls
+tags: mutation, mutate, mutateAsync, error
+versions: v4, v5
 ---
 
 ## Prefer mutate() Over mutateAsync()
 
-Use `mutate()` with callbacks for most cases. Only use `mutateAsync()` for sequential operations.
+Call `mutate()` and handle the outcome with callbacks. `mutateAsync()` returns a promise that rejects when the mutation fails. Use it only when you need that promise: to compose steps that depend on each other, or to wait for several parallel calls. Always wrap it in `try/catch`.
 
-**Incorrect (unhandled promise rejection):**
+**Incorrect (promise rejection that nothing handles):**
 
 ```typescript
-const { mutateAsync } = useMutation({...});
+const { mutateAsync } = useMutation({ mutationFn: updateTodo });
 
-// Easy to forget try/catch
 const handleSave = () => {
-  mutateAsync(data); // Unhandled rejection if error!
+  mutateAsync(todo); // rejects on error and nothing catches it
 };
 ```
 
@@ -25,30 +25,39 @@ const handleSave = () => {
 ```typescript
 const { mutate } = useMutation({
   mutationFn: updateTodo,
-  onSuccess: () => {
-    queryClient.invalidateQueries({ queryKey: ['todos'] });
-  },
+  onSuccess: () => queryClient.invalidateQueries({ queryKey: ['todos'] }),
 });
 
-mutate(todoData, {
+mutate(todo, {
   onSuccess: () => toast.success('Saved!'),
   onError: (error) => toast.error(error.message),
 });
 ```
 
-**Use mutateAsync only for sequential mutations:**
+**Correct (mutateAsync when one step needs the previous result):**
 
 ```typescript
-async function handleComplexSave() {
+async function handleCreate() {
   try {
-    const user = await createUserMutation.mutateAsync(userData);
-    await createProfileMutation.mutateAsync({
-      userId: user.id,
-      ...profileData,
-    });
-    toast.success('User and profile created!');
+    const user = await createUser.mutateAsync(userData);
+    await createProfile.mutateAsync({ userId: user.id, ...profileData });
   } catch (error) {
     toast.error('Failed to create user');
   }
 }
 ```
+
+**Correct (mutateAsync for parallel calls):**
+
+```typescript
+// Callbacks passed per call to mutate() fire only for the LAST call,
+// so use one promise per call and wait for all of them.
+const results = await Promise.allSettled(
+  todos.map((todo) => addTodo.mutateAsync(todo)),
+);
+```
+
+- Callbacks passed per call to `mutate` run only once, for the latest call, and only if the component is still mounted. Callbacks passed to `useMutation` run for every call.
+- v5: if the calls only need to run one after another rather than feed into each other, use a mutation `scope` instead (see `mutation-scope-serial`).
+
+Reference: [Mutations](https://tanstack.com/query/v5/docs/framework/react/guides/mutations) · [useMutation](https://tanstack.com/query/v5/docs/framework/react/reference/functions/useMutation) · [v4 Mutations](https://tanstack.com/query/v4/docs/framework/react/guides/mutations)

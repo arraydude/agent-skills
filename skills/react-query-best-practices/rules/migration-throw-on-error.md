@@ -1,15 +1,14 @@
 ---
 title: useErrorBoundary Renamed to throwOnError
 impact: MEDIUM
-impactDescription: breaking change, find-replace required
-tags: migration, v5, useErrorBoundary, throwOnError, errorBoundary
+impactDescription: breaking change; errors stop reaching the error boundary until renamed
+tags: migration, v5, useErrorBoundary, throwOnError, errorBoundary, codemod
+versions: v4, v5
 ---
 
 ## useErrorBoundary Renamed to throwOnError
 
-In v5, the `useErrorBoundary` option was renamed to `throwOnError` on both queries and mutations.
-
-**Why:** "useErrorBoundary" sounded like a hook, which conflicted with React conventions. `throwOnError` describes what the option actually does — re-throw the error so a surrounding boundary catches it — and works across frameworks (Solid, Vue) without React-specific terminology.
+v5 renamed the `useErrorBoundary` option to `throwOnError` on queries and mutations. The new name avoids the hook-style `use` prefix and describes what the option does: it re-throws the error so the nearest error boundary catches it. It still accepts a boolean or a function.
 
 **v4 (before):**
 
@@ -17,13 +16,11 @@ In v5, the `useErrorBoundary` option was renamed to `throwOnError` on both queri
 useQuery({
   queryKey: ['todos'],
   queryFn: fetchTodos,
-  useErrorBoundary: true,
+  // only throw when there is no cached data to show
+  useErrorBoundary: (error, query) => typeof query.state.data === 'undefined',
 });
 
-useMutation({
-  mutationFn: postTodo,
-  useErrorBoundary: (error) => error.status >= 500,
-});
+useMutation({ mutationFn: postTodo, useErrorBoundary: true });
 ```
 
 **v5 (after):**
@@ -32,13 +29,17 @@ useMutation({
 useQuery({
   queryKey: ['todos'],
   queryFn: fetchTodos,
-  throwOnError: true,
+  throwOnError: (error, query) => typeof query.state.data === 'undefined',
 });
 
-useMutation({
-  mutationFn: postTodo,
-  throwOnError: (error) => error.status >= 500,
-});
+useMutation({ mutationFn: postTodo, throwOnError: true });
 ```
 
-**Migration:** Find-replace `useErrorBoundary` → `throwOnError` across the codebase.
+**Codemod (`rename-properties`, also renames `cacheTime` → `gcTime`):**
+
+```bash
+npx jscodeshift@latest ./src --extensions=ts,tsx --parser=tsx \
+  --transform=./node_modules/@tanstack/react-query/build/codemods/v5/rename-properties/rename-properties.cjs
+```
+
+Reference: [Migrating to v5](https://tanstack.com/query/v5/docs/framework/react/guides/migrating-to-v5#the-useerrorboundary-option-has-been-renamed-to-throwonerror)

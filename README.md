@@ -4,29 +4,37 @@ A collection of skills for AI coding agents.
 
 ## Skills (skills.sh format)
 
-Skills follow the [Agent Skills](https://skills.sh/) format. Most activate when the agent detects a relevant task; `qa-verify` and `babysit-pr` run only when invoked by hand.
+Skills follow the [Agent Skills](https://skills.sh/) format. Most activate when the agent detects a relevant task; `qa-verify`, `babysit-pr` and `react-query-migrate-v5` run only when invoked by hand.
 
 ### react-query-best-practices
 
-React Query **v4** (TanStack Query) best practices, patterns, and troubleshooting. Based on TkDodo's comprehensive blog series.
+TanStack Query (React Query) rules for **v4 and v5**, checked against the official v5.107 docs and changelog and based on TkDodo's blog series. The agent pins the installed version from the lockfile first, then applies only the rules and code blocks for that version.
 
 **Use when:**
-- Implementing new queries or mutations
-- Integrating WebSockets with React Query
-- Setting up query invalidation patterns
-- Debugging React Query behavior
-- Optimizing render performance
-- TypeScript integration questions
+- Writing, reviewing or debugging queries, mutations, invalidation and cache updates
+- Server rendering, suspense, prefetching or infinite queries
+- WebSocket-driven data, TypeScript and testing setups
+- Checking what a v4 → v5 or v5.x upgrade breaks and how to fix it
 
 **Categories covered:**
 - Query Keys & Patterns (Critical)
 - Mutations & Updates (Critical)
 - Caching Strategy (High)
+- SSR & Hydration (High)
+- Suspense, Prefetching & Infinite Queries (High)
 - WebSocket Integration (High)
-- TypeScript Integration (Medium)
-- Testing Patterns (Medium)
+- TypeScript (Medium)
+- Testing (Medium)
+- Tooling (Medium)
 - Common Pitfalls (Medium)
-- Migration to v5 (High)
+- Migration v4 → v5 (High)
+- Upgrading within v5 (High)
+
+### react-query-migrate-v5
+
+Upgrades a repo's `@tanstack/react-query` to the latest v5 release, from v4 or from an older v5 minor. It records a baseline, bumps every TanStack Query package, runs the official codemods, sweeps the code for each `migration-` and `upgrade-` rule, and validates against the baseline. The final report lists the changes that compile cleanly but still shift runtime behaviour.
+
+**Invocation:** by hand only (`/react-query-migrate-v5 [target-version]`). Install `react-query-best-practices` alongside it: the fixes live in its rules.
 
 ### smc-crt-analysis
 
@@ -119,9 +127,13 @@ npx skills add arraydude/agent-skills --skill feature-workflow
 npx skills add arraydude/agent-skills --skill validate-pr
 npx skills add arraydude/agent-skills --skill qa-verify
 npx skills add arraydude/agent-skills --skill babysit-pr
+npx skills add arraydude/agent-skills --skill react-query-migrate-v5
 
 # babysit-pr runs qa-verify, so install them together
 npx skills add arraydude/agent-skills --skill qa-verify --skill babysit-pr
+
+# react-query-migrate-v5 applies react-query-best-practices rules
+npx skills add arraydude/agent-skills --skill react-query-best-practices --skill react-query-migrate-v5
 
 # List what the repo ships
 npx skills add arraydude/agent-skills --list
@@ -140,6 +152,7 @@ How should I handle WebSocket updates with React Query?
 ```
 /qa-verify
 /babysit-pr 123 --skip-qa
+/react-query-migrate-v5
 ```
 
 In Claude Code, any skill also runs as `/<skill-name>`, e.g. `/validate-pr 123`.
@@ -148,7 +161,7 @@ In Claude Code, any skill also runs as `/<skill-name>`, e.g. `/validate-pr 123`.
 
 Every skill has a `SKILL.md` with the agent's instructions. Beyond that:
 - **Rule-based skills** add `rules/` (one file per rule, with examples) and `AGENTS.md` (all rules compiled, rebuilt whenever a rule changes).
-- **Workflow skills** (`qa-verify`, `babysit-pr`) keep their steps in `SKILL.md` and move branch-specific reference into sibling files (e.g. `babysit-pr/route-unrelated.md`).
+- **Workflow skills** (`qa-verify`, `babysit-pr`, `react-query-migrate-v5`) keep their steps in `SKILL.md` and move branch-specific reference into sibling files (e.g. `babysit-pr/route-unrelated.md`).
 
 ## License
 
