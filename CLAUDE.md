@@ -4,9 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository Purpose
 
-This repository contains AI agent skills and commands in two formats:
-- **Skills (skills.sh format)**: Auto-activate when relevant tasks detected, installed via `npx skills add`
-- **Claude Code Commands**: Explicit invocation via `/command-name`, installed by copying `.claude/commands/`
+This repository contains AI agent skills in the skills.sh format, installed via `npx skills add`. Claude Code exposes every skill as a slash command, so anything meant to run from `/name` is a hand-invoked skill (step 2 below), not a `.claude/commands/` file.
 
 ## Repository Structure
 
@@ -21,9 +19,6 @@ skills/                          # skills.sh format skills (source of truth)
 
 .agents/skills/<skill-name>      # Symlink -> ../../skills/<skill-name>
 .claude/skills/<skill-name>      # Symlink -> ../../skills/<skill-name>
-
-.claude/commands/                # Claude Code native commands
-  <command-name>.md              # Command file with frontmatter and instructions
 ```
 
 ## Creating New Skills (skills.sh format)
@@ -40,20 +35,3 @@ To add one:
 3. Keep skills project-agnostic: this repo is public. Read project specifics (commands, logins, channels) from the target repo's `AGENTS.md` / `CLAUDE.md` instead of hard-coding them.
 4. Symlink it: `ln -s ../../skills/<skill-name> .agents/skills/<skill-name>` and the same under `.claude/skills/`.
 5. Add it to `README.md`: a section and an install line.
-
-## Creating New Claude Code Commands
-
-Commands are Markdown files in `.claude/commands/`:
-
-1. Create `.claude/commands/<command-name>.md`
-2. Add YAML frontmatter with `description` field
-3. Use `$ARGUMENTS` placeholder for user input
-4. Include input validation and clear error messages
-5. Document prerequisites (e.g., required CLI tools)
-
-Example frontmatter:
-```yaml
----
-description: Brief description shown in command list
----
-```

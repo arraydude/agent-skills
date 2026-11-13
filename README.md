@@ -1,6 +1,6 @@
 # Agent Skills
 
-A collection of skills and commands for AI coding agents.
+A collection of skills for AI coding agents.
 
 ## Skills (skills.sh format)
 
@@ -84,6 +84,8 @@ Validate AI-generated PR review comments. Checks whether AI comments are accurat
 - Separating genuine findings from hallucinations or misread intent
 - Producing a prioritized action list from a noisy automated review
 
+**Usage:** ask in plain language, or run `/validate-pr [pr-number-or-url]`. Without a PR it validates the current branch's PR.
+
 **Categories covered:**
 - Setup & Input (Critical)
 - Data Gathering (Critical)
@@ -106,28 +108,7 @@ Drives one PR to merge-ready without the human in the loop: merges `origin/main`
 
 **Prerequisites:** `gh` CLI authenticated with push access; auto-merge enabled on the repo. Optional: chat access for the review post (otherwise the line is handed back for you to paste).
 
-## Claude Code Commands
-
-Commands require explicit invocation via `/command-name`. They use Claude Code's native command format.
-
-### validate-pr
-
-Validate AI-generated PR review comments. Checks if AI comments are accurate or hallucinated by cross-referencing with actual code changes.
-
-**Prerequisites:** Requires `gh` CLI installed and authenticated.
-
-**Usage:**
-```
-/validate-pr                                          # the current branch's PR
-/validate-pr 123
-/validate-pr https://github.com/owner/repo/pull/123
-```
-
-The skill and the command behave the same. Install one: Claude Code also exposes skills as slash commands, so with both you get two `/validate-pr` entries.
-
 ## Installation
-
-### Skills (skills.sh)
 
 Install via the skills CLI:
 
@@ -146,18 +127,6 @@ npx skills add arraydude/agent-skills --skill qa-verify --skill babysit-pr
 npx skills add arraydude/agent-skills --list
 ```
 
-### Claude Code Commands
-
-Copy the `.claude/commands/` directory to your project:
-
-```bash
-# Copy all commands
-cp -r .claude/commands/ /path/to/your/project/.claude/commands/
-
-# Or copy a specific command
-cp .claude/commands/validate-pr.md /path/to/your/project/.claude/commands/
-```
-
 ## Usage
 
 **Model-invoked skills** are used when the agent detects a relevant task:
@@ -167,26 +136,19 @@ Review this useQuery implementation
 How should I handle WebSocket updates with React Query?
 ```
 
-**Hand-invoked skills** and **commands** run only from their `/` command:
+**Hand-invoked skills** run only from their `/` command:
 ```
 /qa-verify
 /babysit-pr 123 --skip-qa
-/validate-pr 123
 ```
 
-## Structure
+In Claude Code, any skill also runs as `/<skill-name>`, e.g. `/validate-pr 123`.
 
-### Skills (skills.sh format)
+## Structure
 
 Every skill has a `SKILL.md` with the agent's instructions. Beyond that:
 - **Rule-based skills** add `rules/` (one file per rule, with examples) and `AGENTS.md` (all rules compiled, rebuilt whenever a rule changes).
 - **Workflow skills** (`qa-verify`, `babysit-pr`) keep their steps in `SKILL.md` and move branch-specific reference into sibling files (e.g. `babysit-pr/route-unrelated.md`).
-
-### Claude Code Commands
-
-Commands are stored in `.claude/commands/` as Markdown files with optional frontmatter:
-- `*.md` - Command file with instructions
-- Frontmatter can specify `allowed-tools` and other metadata
 
 ## License
 
