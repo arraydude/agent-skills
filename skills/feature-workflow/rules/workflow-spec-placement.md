@@ -34,9 +34,8 @@ packages/backend/.claude/
 ```
 
 **Placement rules:**
-- Autopilot feature specs → `packages/autopilot/.claude/`
-- Design system specs → `packages/design-system/.claude/`
-- Backend specs → `packages/backend/.claude/`
+- A spec goes in `<package>/.claude/` of the package it primarily changes
+  (single-package repos: the root `.claude/`)
 - Cross-package specs → place in the most affected package, reference others
 
 **File naming conventions:**

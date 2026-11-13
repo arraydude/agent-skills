@@ -16,18 +16,10 @@ PR URL: $ARGUMENTS
 
 ## Input Validation
 
-1. **Validate PR argument**:
-   - If `$ARGUMENTS` is empty or missing, display this error and stop:
-     ```
-     Error: Please provide a PR number or URL.
-
-     Usage: /validate-pr <PR_NUMBER_OR_URL>
-
-     Examples:
-       /validate-pr 123
-       /validate-pr https://github.com/owner/repo/pull/123
-     ```
-   - Accept either:
+1. **Resolve the PR**:
+   - `$ARGUMENTS` empty → use the current branch's PR (`gh pr view --json number,title`).
+     No PR for the branch → ask the user which PR they mean.
+   - Otherwise accept either:
      - PR number (e.g., `123`)
      - Full PR URL (e.g., `https://github.com/owner/repo/pull/123`)
    - Extract the PR number from the URL if a full URL is provided

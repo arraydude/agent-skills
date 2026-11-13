@@ -127,8 +127,11 @@ of its **Ask** gates here:
 - Variants that can't be set up locally: try to configure once, then ⬜ Not
   verified.
 - Credential blockers: ⬜ Not verified for the affected rows.
-- Screenshots: optional. Skip the attachment upload, and fill each Before and
-  After cell with a short text description of what that side showed.
+- Project facts the repo doesn't state: infer them from its scripts and README;
+  a fact that still blocks a journey makes that row ⬜ Not verified.
+- Screenshots: skip the attachment upload (qa-verify step 5.1) and its
+  read-back check (step 5.3); fill each Before and After cell with a short text
+  description of what that side showed.
 
 Done when the QA table is published and `lastQaSha` / `lastQaResult` are
 recorded. Any ❌ → escalate. Otherwise → step 6.

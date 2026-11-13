@@ -30,7 +30,7 @@ skills/                          # skills.sh format skills (source of truth)
 
 Skills follow the [skills.sh](https://skills.sh/) format and come in two shapes:
 
-- **Rule-based** (`react-query-best-practices`, `validate-pr`): a body of guidance the agent consults. `SKILL.md` indexes the rules, `rules/` holds one file per rule (brief explanation + incorrect/correct examples), and `AGENTS.md` compiles them all for distribution.
+- **Rule-based** (`react-query-best-practices`, `validate-pr`): a body of guidance the agent consults. `SKILL.md` indexes the rules, `rules/` holds one file per rule (brief explanation + incorrect/correct examples), and `AGENTS.md` compiles them all for distribution. Any change to a rule file updates `AGENTS.md` and the `SKILL.md` index in the same commit.
 - **Workflow** (`qa-verify`, `babysit-pr`): ordered steps the agent executes, each ending on a checkable completion criterion. `SKILL.md` holds the steps; reference that only some branches need moves to a sibling `<topic>.md` linked from the step that uses it. No `rules/` or `AGENTS.md`.
 
 To add one:

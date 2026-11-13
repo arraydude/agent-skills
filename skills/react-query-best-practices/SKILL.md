@@ -10,9 +10,9 @@ metadata:
 
 # React Query Best Practices
 
-> **Important:** This guide targets **React Query v4**. Some patterns may differ in v5.
+> This guide targets **React Query v4**. The `migration-` rules cover moving a codebase to v5.
 
-Comprehensive guide for React Query v4 (TanStack Query) based on TkDodo's authoritative blog series. Contains 24 rules across 7 categories, prioritized by impact.
+Comprehensive guide for React Query v4 (TanStack Query) based on TkDodo's authoritative blog series., prioritized by impact.
 
 ## When to Apply
 
