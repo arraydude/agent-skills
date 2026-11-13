@@ -1,0 +1,6 @@
+interface:
+  display_name: QA verify
+  short_description: Before/after end-to-end QA of the branch in a headed browser, published to the PR
+  default_prompt: Use $qa-verify to QA this branch against main and publish the results to the PR.
+policy:
+  allow_implicit_invocation: false

@@ -87,6 +87,22 @@ Validate AI-generated PR review comments. Checks whether AI comments are accurat
 - Validation (Critical)
 - Output (High)
 
+### qa-verify
+
+End-to-end QA in a headed browser. Maps the diff to the user journeys it reaches, runs each journey on `origin/main` (Before) and on the branch (After) from the same DB snapshot, and publishes a Before/After screenshot table to the PR. Reports regressions without touching product code.
+
+**Invocation:** by hand only (`/qa-verify`).
+
+**Prerequisites:** `gh` CLI authenticated, a local stack the agent can start, and a headed browser tool. Project specifics (how to log in as each persona, seed data, start the stack) are read from the repo's `AGENTS.md` / `CLAUDE.md`.
+
+### babysit-pr
+
+Drives one PR to merge-ready without the human in the loop: merges `origin/main`, fixes failing checks it caused, routes breakage that is already red on main to another session, runs `qa-verify`, enables auto-merge pinned to the verified SHA, and posts the PR to the team's review channel. Escalates on a QA regression, a conflict that needs a product decision, or a blocking credential.
+
+**Invocation:** by hand only (`/babysit-pr [pr] [--skip-qa]`). Install `qa-verify` alongside it unless you always pass `--skip-qa`.
+
+**Prerequisites:** `gh` CLI authenticated with push access; auto-merge enabled on the repo. Optional: chat access for the review post (otherwise the line is handed back for you to paste).
+
 ## Claude Code Commands
 
 Commands require explicit invocation via `/command-name`. They use Claude Code's native command format.
@@ -114,6 +130,8 @@ npx skills add arraydude/agent-skills --skill react-query-best-practices
 npx skills add arraydude/agent-skills --skill smc-crt-analysis
 npx skills add arraydude/agent-skills --skill feature-workflow
 npx skills add arraydude/agent-skills --skill validate-pr
+npx skills add arraydude/agent-skills --skill qa-verify
+npx skills add arraydude/agent-skills --skill babysit-pr
 ```
 
 ### Claude Code Commands
@@ -146,11 +164,9 @@ How should I handle WebSocket updates with React Query?
 
 ### Skills (skills.sh format)
 
-Each skill contains:
-- `SKILL.md` - Instructions for the agent
-- `AGENTS.md` - Full compiled document with all rules expanded
-- `rules/` - Individual rule files with code examples
-- `metadata.json` - Version and reference information
+Every skill has a `SKILL.md` with the agent's instructions. Beyond that:
+- **Rule-based skills** add `rules/` (one file per rule, with examples) and `AGENTS.md` (all rules compiled).
+- **Workflow skills** (`qa-verify`, `babysit-pr`) keep their steps in `SKILL.md` and move branch-specific reference into sibling files (e.g. `babysit-pr/route-unrelated.md`).
 
 ### Claude Code Commands
 
