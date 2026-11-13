@@ -4,7 +4,7 @@ A collection of skills and commands for AI coding agents.
 
 ## Skills (skills.sh format)
 
-Skills auto-activate when relevant tasks are detected. They follow the [Agent Skills](https://skills.sh/) format.
+Skills follow the [Agent Skills](https://skills.sh/) format. Most activate when the agent detects a relevant task; `qa-verify` and `babysit-pr` run only when invoked by hand.
 
 ### react-query-best-practices
 
@@ -26,6 +26,7 @@ React Query **v4** (TanStack Query) best practices, patterns, and troubleshootin
 - TypeScript Integration (Medium)
 - Testing Patterns (Medium)
 - Common Pitfalls (Medium)
+- Migration to v5 (High)
 
 ### smc-crt-analysis
 
@@ -68,6 +69,8 @@ Feature planning, specification, phased implementation, progress tracking, per-p
 - PR Strategy (High)
 - Archival (Medium)
 - Workflow Collaboration (Medium)
+
+**Assumes GitFlow:** feature PRs target `develop`.
 
 ### validate-pr
 
@@ -115,9 +118,12 @@ Validate AI-generated PR review comments. Checks if AI comments are accurate or 
 
 **Usage:**
 ```
+/validate-pr                                          # the current branch's PR
 /validate-pr 123
 /validate-pr https://github.com/owner/repo/pull/123
 ```
+
+The skill and the command behave the same. Install one: Claude Code also exposes skills as slash commands, so with both you get two `/validate-pr` entries.
 
 ## Installation
 
@@ -132,6 +138,12 @@ npx skills add arraydude/agent-skills --skill feature-workflow
 npx skills add arraydude/agent-skills --skill validate-pr
 npx skills add arraydude/agent-skills --skill qa-verify
 npx skills add arraydude/agent-skills --skill babysit-pr
+
+# babysit-pr runs qa-verify, so install them together
+npx skills add arraydude/agent-skills --skill qa-verify --skill babysit-pr
+
+# List what the repo ships
+npx skills add arraydude/agent-skills --list
 ```
 
 ### Claude Code Commands
@@ -148,15 +160,17 @@ cp .claude/commands/validate-pr.md /path/to/your/project/.claude/commands/
 
 ## Usage
 
-**Skills** are automatically available once installed. The agent will use them when relevant tasks are detected:
+**Model-invoked skills** are used when the agent detects a relevant task:
 ```
 Help me set up React Query with proper caching
 Review this useQuery implementation
 How should I handle WebSocket updates with React Query?
 ```
 
-**Commands** require explicit invocation with the `/` prefix:
+**Hand-invoked skills** and **commands** run only from their `/` command:
 ```
+/qa-verify
+/babysit-pr 123 --skip-qa
 /validate-pr 123
 ```
 
@@ -165,7 +179,7 @@ How should I handle WebSocket updates with React Query?
 ### Skills (skills.sh format)
 
 Every skill has a `SKILL.md` with the agent's instructions. Beyond that:
-- **Rule-based skills** add `rules/` (one file per rule, with examples) and `AGENTS.md` (all rules compiled).
+- **Rule-based skills** add `rules/` (one file per rule, with examples) and `AGENTS.md` (all rules compiled, rebuilt whenever a rule changes).
 - **Workflow skills** (`qa-verify`, `babysit-pr`) keep their steps in `SKILL.md` and move branch-specific reference into sibling files (e.g. `babysit-pr/route-unrelated.md`).
 
 ### Claude Code Commands
