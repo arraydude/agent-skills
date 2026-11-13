@@ -1,6 +1,6 @@
 ---
 name: react-query-best-practices
-description: TanStack Query (React Query) v4 and v5 rules for queries, mutations, caching, SSR, suspense, TypeScript and testing, plus every v4 → v5 and v5.x breaking change with its fix. Use when writing, reviewing or debugging code that uses @tanstack/react-query (useQuery, useMutation, queryClient, invalidation), or when upgrading it.
+description: TanStack Query (React Query) v4 and v5 rules, plus every breaking change up to the latest v5 with its fix. Use when writing, reviewing or debugging code that uses @tanstack/react-query (useQuery, useMutation, queryClient), or when upgrading it.
 license: MIT
 metadata:
   author: arraydude
@@ -10,8 +10,8 @@ metadata:
 
 # React Query Best Practices
 
-Rules for `@tanstack/react-query` v4 and v5, checked against the official v5.107
-docs and changelog and based on TkDodo's blog series. Each rule lives in
+Rules for `@tanstack/react-query` v4 and v5, checked against the library source
+(5.107.1 and 4.44.0), docs and changelog, and based on TkDodo's blog series. Each rule lives in
 `rules/<id>.md` with incorrect and correct code.
 
 ## Pin the version first
@@ -20,14 +20,14 @@ Read the installed version from the lockfile entry for `@tanstack/react-query`
 (the `package.json` range can lie). Then:
 
 - Apply the rules whose `versions` frontmatter includes that major.
-- Skip a rule whose `since` is above the installed minor. Its last line names
-  the migration path.
+- Skip a rule whose `since` is above the installed version.
 - Inside a rule, use the code block labelled for that version. Unlabelled code
   is valid for every version the rule lists.
 - Only the v3 package `react-query` present → these rules don't apply.
 
-To move a repo to the latest v5, run the `/react-query-migrate-v5` skill. It
-applies the `migration-` and `upgrade-` rules in order.
+To move a repo to the latest v5 (and unlock the skipped rules), run the
+`/react-query-migrate-v5` skill. It applies the `migration-` and `upgrade-`
+rules in order.
 
 ## Core mental model
 
@@ -36,26 +36,9 @@ applies the `migration-` and `upgrade-` rules in order.
 3. **Stale-while-revalidate:** cached data shows at once, refetches run in the background.
 4. **Query keys are dependencies:** every variable the `queryFn` reads goes in the key.
 
-## Rule categories
-
-| Priority | Category | Impact | Prefix |
-|---|---|---|---|
-| 1 | Query Keys & Patterns | CRITICAL | `query-` |
-| 2 | Mutations & Updates | CRITICAL | `mutation-` |
-| 3 | Caching Strategy | HIGH | `cache-` |
-| 4 | SSR & Hydration | HIGH | `ssr-` |
-| 5 | Suspense, Prefetching & Infinite Queries | HIGH | `suspense-`, `prefetch-`, `infinite-` |
-| 6 | WebSocket Integration | HIGH | `websocket-` |
-| 7 | TypeScript | MEDIUM | `typescript-` |
-| 8 | Testing | MEDIUM | `testing-` |
-| 9 | Tooling | MEDIUM | `tooling-` |
-| 10 | Common Pitfalls | MEDIUM | `troubleshoot-` |
-| 11 | Migration v4 → v5 | HIGH | `migration-` |
-| 12 | Upgrading within v5 | HIGH | `upgrade-` |
-
-Tags below: `[v5]` = v5 only; `[v5.102+]` = needs that minor. No tag = v4 and v5.
-
 ## Quick reference
+
+Categories in priority order. Tags: `[v5]` = v5 only; `[v5.102+]` = needs that minor. No tag = v4 and v5.
 
 ### 1. Query Keys & Patterns (CRITICAL)
 
@@ -154,7 +137,3 @@ Tags below: `[v5]` = v5 only; `[v5.102+]` = needs that minor. No tag = v4 and v5
 - `upgrade-mutation-callback-context` [v5.89+] - `onMutateResult` and the mutation function context
 - `upgrade-deprecated-apis` [v5.91+] - `isServer`, sync persister, `isCancelledError`, `direction`, filter fields
 - `upgrade-toolchain-floors` [v5.100+] - TypeScript and React ranges
-
-## Full compiled document
-
-`AGENTS.md` holds every rule expanded, in this order.

@@ -24,9 +24,7 @@ Argument: an optional target version. Default: the latest 5.x on npm
 - **Installed version:** the lockfile entry for `@tanstack/react-query`, not the
   `package.json` range. Only the v3 package `react-query` present → report that
   v3 → v4 comes first and stop.
-- **Path:** from 4.x, run every step. From 5.x, skip step 4, and step 5 covers
-  only the [sweep.md](sweep.md) rows scoped `since 5.N` above the installed
-  version.
+- **Path:** from 4.x, run every step. From 5.x, skip step 4.
 - **Floors** (`upgrade-toolchain-floors`, `migration-misc-breaking-changes`):
   React `^18 || ^19`, TypeScript and browser minimums. A floor that fails →
   report it and stop: raising React or TypeScript is the human's call.
@@ -71,10 +69,17 @@ Done when all five ran and their skipped usages are on the worklist.
 
 ## 5. Sweep
 
-For each rule in scope, run its search from [sweep.md](sweep.md), read the
-rule, and apply its fix to every hit and worklist entry.
+Run the sweep with the version installed **before** step 3. It picks the rules
+in scope for that version and lists every hit as `file:line`:
 
-Done when every in-scope search returns no hits, or each remaining hit is
+```bash
+node <this skill's dir>/sweep.mjs <from-version> .
+```
+
+For each rule with hits, read the rule and apply its fix to every hit and
+worklist entry. Re-run the sweep after each rule.
+
+Done when the sweep reports 0 hits for every row, or each remaining hit is
 listed with the reason it stays.
 
 ## 6. Validate
@@ -88,6 +93,6 @@ Done when the only failures left are the baseline ones.
 
 - From → to versions, the codemods run, and the files changed per rule.
 - **Behaviour to check by hand.** Some changes compile cleanly and still shift
-  runtime behaviour. List each in-scope rule marked `runtime` in
-  [sweep.md](sweep.md) with the files it touches.
+  runtime behaviour. List each rule on the sweep's last line ("Runtime rules
+  in scope") with the files it touched.
 - Remaining hits with their reasons, and baseline failures left as found.

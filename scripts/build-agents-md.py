@@ -5,8 +5,8 @@ Usage: scripts/build-agents-md.py skills/<skill> [--check]
 
 The SKILL.md "Quick reference" section is the source of order: each
 "### N. Category (IMPACT)" heading is a section and each "- `rule-id`" bullet
-below it is a rule. Everything in SKILL.md between the H1 and "## Rule
-categories" is copied in as the preamble.
+below it is a rule. Everything in SKILL.md between the H1 and "## Quick reference" is copied in
+as the preamble.
 
 --check exits non-zero, writing nothing, when the index and rules/ disagree or
 when AGENTS.md is out of date.
@@ -52,7 +52,7 @@ def build(skill: Path) -> str:
     meta, body = frontmatter(skill_md)
     title = re.search(r"^# (.+)$", body, flags=re.M).group(1)
     preamble = body.split(f"# {title}", 1)[1]
-    preamble = re.split(r"^## Rule categories", preamble, flags=re.M | re.I)[0].strip()
+    preamble = re.split(r"^## Quick reference", preamble, flags=re.M | re.I)[0].strip()
     version = re.search(r'version:\s*"?([\d.]+)', skill_md)
 
     sections = parse_index(skill_md)

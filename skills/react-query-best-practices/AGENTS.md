@@ -3,8 +3,8 @@
 
 **Version 2.0.0**
 
-Rules for `@tanstack/react-query` v4 and v5, checked against the official v5.107
-docs and changelog and based on TkDodo's blog series. Each rule lives in
+Rules for `@tanstack/react-query` v4 and v5, checked against the library source
+(5.107.1 and 4.44.0), docs and changelog, and based on TkDodo's blog series. Each rule lives in
 `rules/<id>.md` with incorrect and correct code.
 
 ## Pin the version first
@@ -13,14 +13,14 @@ Read the installed version from the lockfile entry for `@tanstack/react-query`
 (the `package.json` range can lie). Then:
 
 - Apply the rules whose `versions` frontmatter includes that major.
-- Skip a rule whose `since` is above the installed minor. Its last line names
-  the migration path.
+- Skip a rule whose `since` is above the installed version.
 - Inside a rule, use the code block labelled for that version. Unlabelled code
   is valid for every version the rule lists.
 - Only the v3 package `react-query` present → these rules don't apply.
 
-To move a repo to the latest v5, run the `/react-query-migrate-v5` skill. It
-applies the `migration-` and `upgrade-` rules in order.
+To move a repo to the latest v5 (and unlock the skipped rules), run the
+`/react-query-migrate-v5` skill. It applies the `migration-` and `upgrade-`
+rules in order.
 
 ## Core mental model
 
