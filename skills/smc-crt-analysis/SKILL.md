@@ -1,6 +1,6 @@
 ---
 name: smc-crt-analysis
-description: Analyze any asset (stocks, crypto, forex) using Smart Money Concepts (SMC) and Candle Range Theory (CRT). Use when the user asks for technical analysis, market structure analysis, liquidity analysis, order block identification, or price action reading. Triggers include "SMC analysis", "CRT analysis", "market structure", "order blocks", "liquidity sweep", "break of structure", "change of character", "fair value gap", "imbalance", "premium/discount", "smart money", "institutional flow", "POI", "sniper entry", "turtle soup", "where is smart money", "Wyckoff", "Elliott Wave", or any request to analyze price charts using institutional order flow concepts. Also triggers when analyzing entry/exit points, stop loss placement, or identifying manipulation patterns on any timeframe.
+description: Analyze any asset (stocks, crypto, forex) using Smart Money Concepts (SMC) and Candle Range Theory (CRT). Use when the user asks for technical analysis, market structure analysis, liquidity analysis, order block identification, or price action reading. Triggers include "SMC analysis", "CRT analysis", "market structure", "order blocks", "liquidity sweep", "break of structure", "change of character", "fair value gap", "imbalance", "premium/discount", "smart money", "institutional flow", "POI", "sniper entry", "turtle soup", "where is smart money", or any request to analyze price charts using institutional order flow concepts. Also triggers when analyzing entry/exit points, stop loss placement, or identifying manipulation patterns on any timeframe.
 license: MIT
 metadata:
   author: arraydude
@@ -92,4 +92,7 @@ Structure every SMC+CRT analysis as:
 
 ## Full Compiled Document
 
-For the complete guide with all rules expanded: `AGENTS.md`
+Expanded rules live in `rules/<id>.md`. Five topics have no rule file and are
+covered only in `AGENTS.md`: `structure-strong-weak-points` (§1),
+`liquidity-inducement` and `liquidity-killzones` (§2), `orderblock-poi-hierarchy`
+(§3), `crt-range-types` (§5). For the complete guide: `AGENTS.md`

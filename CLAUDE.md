@@ -4,47 +4,34 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository Purpose
 
-This repository contains AI agent skills and commands in two formats:
-- **Skills (skills.sh format)**: Auto-activate when relevant tasks detected, installed via `npx skills add`
-- **Claude Code Commands**: Explicit invocation via `/command-name`, installed by copying `.claude/commands/`
+This repository contains AI agent skills in the skills.sh format, installed via `npx skills add`. Claude Code exposes every skill as a slash command, so anything meant to run from `/name` is a hand-invoked skill (step 2 below), not a `.claude/commands/` file.
 
 ## Repository Structure
 
 ```
-skills/                          # skills.sh format skills
+skills/                          # skills.sh format skills (source of truth)
   <skill-name>/
     SKILL.md                     # Instructions for the agent (frontmatter + content)
-    AGENTS.md                    # Full compiled document with all rules expanded
-    rules/                       # Individual rule files with code examples
-    metadata.json                # Version and reference information
+    AGENTS.md                    # Rule-based skills: compiled document, all rules expanded
+    rules/                       # Rule-based skills: one file per rule
+    <topic>.md                   # Workflow skills: reference disclosed from SKILL.md
+    agents/openai.yaml           # Optional: Codex display name and invocation policy
 
-.claude/commands/                # Claude Code native commands
-  <command-name>.md              # Command file with frontmatter and instructions
+.agents/skills/<skill-name>      # Symlink -> ../../skills/<skill-name>
+.claude/skills/<skill-name>      # Symlink -> ../../skills/<skill-name>
 ```
 
 ## Creating New Skills (skills.sh format)
 
-Skills follow the [skills.sh](https://skills.sh/) format:
+Skills follow the [skills.sh](https://skills.sh/) format and come in two shapes:
 
-1. Create directory under `skills/<skill-name>/`
-2. `SKILL.md` - Main entry point with YAML frontmatter containing `name`, `description`, `license`, and `metadata`
-3. `metadata.json` - Version, organization, abstract, and reference URLs
-4. `rules/` - Individual rule files with brief explanation + incorrect/correct code examples
-5. `AGENTS.md` - Compiled document containing all rules expanded (for distribution)
+- **Rule-based** (`react-query-best-practices`, `validate-pr`): a body of guidance the agent consults. `SKILL.md` indexes the rules, `rules/` holds one file per rule (brief explanation + incorrect/correct examples), and `AGENTS.md` compiles them all for distribution. Any change to a rule file updates `AGENTS.md` and the `SKILL.md` index in the same commit.
+- **Workflow** (`qa-verify`, `babysit-pr`): ordered steps the agent executes, each ending on a checkable completion criterion. `SKILL.md` holds the steps; reference that only some branches need moves to a sibling `<topic>.md` linked from the step that uses it. No `rules/` or `AGENTS.md`.
 
-## Creating New Claude Code Commands
+To add one:
 
-Commands are Markdown files in `.claude/commands/`:
-
-1. Create `.claude/commands/<command-name>.md`
-2. Add YAML frontmatter with `description` field
-3. Use `$ARGUMENTS` placeholder for user input
-4. Include input validation and clear error messages
-5. Document prerequisites (e.g., required CLI tools)
-
-Example frontmatter:
-```yaml
----
-description: Brief description shown in command list
----
-```
+1. Create `skills/<skill-name>/` with a `SKILL.md` whose YAML frontmatter has `name`, `description`, `license: MIT`, and `metadata` (`author`, `version`).
+2. Pick the invocation: keep a trigger-rich `description` when the agent should fire the skill on its own; set `disable-model-invocation: true` (and a one-line, human-facing `description`) when it only runs by hand. Mirror a hand-run skill in `agents/openai.yaml` with `allow_implicit_invocation: false`.
+3. Keep skills project-agnostic: this repo is public. Read project specifics (commands, logins, channels) from the target repo's `AGENTS.md` / `CLAUDE.md` instead of hard-coding them.
+4. Symlink it: `ln -s ../../skills/<skill-name> .agents/skills/<skill-name>` and the same under `.claude/skills/`.
+5. Add it to `README.md`: a section and an install line.

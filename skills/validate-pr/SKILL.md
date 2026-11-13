@@ -1,6 +1,6 @@
 ---
 name: validate-pr
-description: Validate AI-generated PR review comments — check whether they are accurate or hallucinated by cross-referencing each comment against the actual code changes. Use when the user asks to validate PR comments, review the bot/AI comments on a pull request, check if review comments are accurate or hallucinated, or triage which review feedback is worth addressing. Triggers include "validate PR comments", "are these AI review comments accurate", "check for hallucinated review comments", "review the bot comments on this PR", "which of these PR comments are real", "validate the AI feedback on PR", "triage PR review comments".
+description: Validate AI-generated PR review comments — check whether they are accurate or hallucinated by cross-referencing each comment against the actual code changes. Use when the user wants bot or AI review comments on a PR checked for accuracy, or wants to triage which review feedback is worth addressing.
 license: MIT
 metadata:
   author: arraydude

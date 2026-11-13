@@ -4,7 +4,7 @@
 Based on TkDodo's Blog Series
 January 2026
 
-> **Important:** This guide targets **React Query v4**. Some patterns may differ in v5.
+> This guide targets **React Query v4**. The `migration-` rules cover moving a codebase to v5.
 
 > **Note:**
 > This document is mainly for agents and LLMs to follow when maintaining,
@@ -16,7 +16,7 @@ January 2026
 
 ## Abstract
 
-Comprehensive guide for React Query (TanStack Query) based on TkDodo's authoritative blog series. Contains 24 rules across 7 categories, prioritized by impact from critical (query keys, mutations) to incremental (testing, troubleshooting). Each rule includes detailed explanations, real-world examples comparing incorrect vs. correct implementations, and specific impact metrics to guide automated refactoring and code generation.
+Comprehensive guide for React Query (TanStack Query) based on TkDodo's authoritative blog series. Rules are prioritized by impact, from critical (query keys, mutations) to incremental (testing, troubleshooting). Each rule includes detailed explanations, real-world examples comparing incorrect vs. correct implementations, and specific impact metrics to guide automated refactoring and code generation.
 
 ---
 
@@ -54,9 +54,20 @@ Comprehensive guide for React Query (TanStack Query) based on TkDodo's authorita
    - 7.2 [Missing Query Key Dependencies](#72-missing-query-key-dependencies)
    - 7.3 [Fetch Not Rejecting on Errors](#73-fetch-not-rejecting-on-errors)
 8. [Migration to v5](#8-migration-to-v5) — **HIGH**
-   - 8.1 [cacheTime Renamed to gcTime](#81-cachetime-renamed-to-gctime)
-   - 8.2 [Query Callbacks Removed](#82-query-callbacks-removed)
-   - 8.3 [New Suspense Hooks](#83-new-suspense-hooks)
+   - 8.1 [Single Object Signature Required](#81-single-object-signature-required)
+   - 8.2 [Status "loading" Renamed to "pending"](#82-status-loading-renamed-to-pending)
+   - 8.3 [cacheTime Renamed to gcTime](#83-cachetime-renamed-to-gctime)
+   - 8.4 [keepPreviousData Replaced by placeholderData Function](#84-keeppreviousdata-replaced-by-placeholderdata-function)
+   - 8.5 [Query Callbacks Removed from useQuery](#85-query-callbacks-removed-from-usequery)
+   - 8.6 [New Dedicated Suspense Hooks](#86-new-dedicated-suspense-hooks)
+   - 8.7 [useErrorBoundary Renamed to throwOnError](#87-useerrorboundary-renamed-to-throwonerror)
+   - 8.8 [remove() Method Removed from useQuery](#88-remove-method-removed-from-usequery)
+   - 8.9 [initialPageParam Required for Infinite Queries](#89-initialpageparam-required-for-infinite-queries)
+   - 8.10 [refetchPage Replaced by maxPages](#810-refetchpage-replaced-by-maxpages)
+   - 8.11 [Hydrate Component Renamed to HydrationBoundary](#811-hydrate-component-renamed-to-hydrationboundary)
+   - 8.12 [refetchInterval Callback Signature Changed](#812-refetchinterval-callback-signature-changed)
+   - 8.13 [Custom context Prop Replaced by queryClient Argument](#813-custom-context-prop-replaced-by-queryclient-argument)
+   - 8.14 [Misc v5 Breaking Changes](#814-misc-v5-breaking-changes)
 
 ---
 
@@ -1115,7 +1126,83 @@ const { data, error } = useQuery({
 
 When upgrading from React Query v4 to v5, these are the key breaking changes to address.
 
-### 8.1 cacheTime Renamed to gcTime
+### 8.1 Single Object Signature Required
+
+**Impact: HIGH (breaking change, all positional-arg calls must be rewritten)**
+
+In v5, all hooks and `queryClient` methods accept a single object argument. The legacy positional-argument overloads (e.g. `useQuery(key, fn, options)`) were removed.
+
+**Why:** v4 supported both the positional and object forms, doubling the API surface and confusing TypeScript inference. v5 commits to one signature, simplifying types and docs.
+
+**v4 (before):**
+
+```typescript
+useQuery(['todos'], fetchTodos, { staleTime: 5000 });
+
+useMutation(postTodo, {
+  onSuccess: () => queryClient.invalidateQueries(['todos']),
+});
+
+queryClient.invalidateQueries(['todos'], { exact: true });
+queryClient.fetchQuery(['todo', id], () => fetchTodo(id));
+```
+
+**v5 (after):**
+
+```typescript
+useQuery({ queryKey: ['todos'], queryFn: fetchTodos, staleTime: 5000 });
+
+useMutation({
+  mutationFn: postTodo,
+  onSuccess: () => queryClient.invalidateQueries({ queryKey: ['todos'] }),
+});
+
+queryClient.invalidateQueries({ queryKey: ['todos'], exact: true });
+queryClient.fetchQuery({ queryKey: ['todo', id], queryFn: () => fetchTodo(id) });
+```
+
+**Migration tip:** The official codemod handles most cases — run `npx jscodeshift@latest ./src/ --extensions=ts,tsx --transform=./node_modules/@tanstack/react-query/build/codemods/src/v5/remove-overloads/remove-overloads.cjs`.
+
+### 8.2 Status "loading" Renamed to "pending"
+
+**Impact: HIGH (breaking change, find-replace required across all queries)**
+
+In v5, the query status `'loading'` was renamed to `'pending'`, and the derived flag `isLoading` was redefined. The previous `isInitialLoading` is now `isLoading`.
+
+**Why:** The status `'pending'` more accurately reflects that the query has no data yet (it isn't necessarily fetching). `isLoading` now means "pending AND fetching", matching the common intuition.
+
+**v4 (before):**
+
+```typescript
+const { status, isLoading, isInitialLoading } = useQuery({
+  queryKey: ['todos'],
+  queryFn: fetchTodos,
+});
+
+if (status === 'loading') return <Spinner />;
+if (isInitialLoading) return <Spinner />;
+```
+
+**v5 (after):**
+
+```typescript
+const { status, isPending, isLoading } = useQuery({
+  queryKey: ['todos'],
+  queryFn: fetchTodos,
+});
+
+if (status === 'pending') return <Spinner />;
+// isLoading in v5 === isInitialLoading in v4 (pending AND fetching)
+if (isLoading) return <Spinner />;
+```
+
+**Migration checklist:**
+- Replace `status === 'loading'` with `status === 'pending'`
+- Replace `isInitialLoading` with `isLoading`
+- Audit existing `isLoading` usage — semantics changed (now requires fetching too)
+- Mutations: `isLoading` → `isPending`
+
+### 8.3 cacheTime Renamed to gcTime
 
 **Impact: HIGH (breaking change, find-replace required)**
 
@@ -1157,15 +1244,47 @@ useQuery({
 });
 ```
 
-**Migration:** Find and replace all occurrences of `cacheTime` with `gcTime`.
+**Migration:** Find and replace all occurrences of `cacheTime` with `gcTime` in your codebase.
 
-### 8.2 Query Callbacks Removed
+### 8.4 keepPreviousData Replaced by placeholderData Function
+
+**Impact: HIGH (breaking change, common in pagination/filtering UIs)**
+
+In v5, the `keepPreviousData` boolean option and `isPreviousData` flag were removed. Use `placeholderData` with the exported `keepPreviousData` identity function instead. The flag is now `isPlaceholderData`.
+
+**Why:** `placeholderData` and `keepPreviousData` overlapped conceptually. Unifying them into one option simplifies the mental model — both "show something while we fetch" cases now go through `placeholderData`.
+
+**v4 (before):**
+
+```typescript
+const { data, isPreviousData } = useQuery({
+  queryKey: ['projects', page],
+  queryFn: () => fetchProjects(page),
+  keepPreviousData: true,
+});
+```
+
+**v5 (after):**
+
+```typescript
+import { keepPreviousData } from '@tanstack/react-query';
+
+const { data, isPlaceholderData } = useQuery({
+  queryKey: ['projects', page],
+  queryFn: () => fetchProjects(page),
+  placeholderData: keepPreviousData,
+});
+```
+
+**Migration:** Find `keepPreviousData: true` and replace with `placeholderData: keepPreviousData` (imported from `@tanstack/react-query`). Rename `isPreviousData` to `isPlaceholderData`.
+
+### 8.5 Query Callbacks Removed from useQuery
 
 **Impact: HIGH (breaking change, refactor required)**
 
 In v5, the `onSuccess`, `onError`, and `onSettled` callbacks were removed from `useQuery`. Use `useEffect` or handle in the component instead.
 
-**Why removed:** These callbacks had subtle timing issues and didn't play well with React's concurrent features.
+**Why removed:** These callbacks had subtle timing issues and didn't play well with React's concurrent features. They also encouraged mixing data fetching with side effects.
 
 **v4 (before):**
 
@@ -1207,7 +1326,7 @@ useEffect(() => {
 
 **Note:** Mutation callbacks (`onSuccess`, `onError`, `onSettled`) are still available on `useMutation`.
 
-### 8.3 New Suspense Hooks
+### 8.6 New Dedicated Suspense Hooks
 
 **Impact: HIGH (new API for suspense mode)**
 
@@ -1242,6 +1361,309 @@ const { data } = useSuspenseQuery({
 - `useSuspenseQuery` - Single query with suspense
 - `useSuspenseInfiniteQuery` - Infinite query with suspense
 - `useSuspenseQueries` - Multiple queries with suspense
+
+**Benefits:**
+- Better TypeScript support (data is never undefined)
+- Clearer intent in code
+- No need for `suspense: true` option
+
+### 8.7 useErrorBoundary Renamed to throwOnError
+
+**Impact: MEDIUM (breaking change, find-replace required)**
+
+In v5, the `useErrorBoundary` option was renamed to `throwOnError` on both queries and mutations.
+
+**Why:** "useErrorBoundary" sounded like a hook, which conflicted with React conventions. `throwOnError` describes what the option actually does — re-throw the error so a surrounding boundary catches it — and works across frameworks (Solid, Vue) without React-specific terminology.
+
+**v4 (before):**
+
+```typescript
+useQuery({
+  queryKey: ['todos'],
+  queryFn: fetchTodos,
+  useErrorBoundary: true,
+});
+
+useMutation({
+  mutationFn: postTodo,
+  useErrorBoundary: (error) => error.status >= 500,
+});
+```
+
+**v5 (after):**
+
+```typescript
+useQuery({
+  queryKey: ['todos'],
+  queryFn: fetchTodos,
+  throwOnError: true,
+});
+
+useMutation({
+  mutationFn: postTodo,
+  throwOnError: (error) => error.status >= 500,
+});
+```
+
+**Migration:** Find-replace `useErrorBoundary` → `throwOnError` across the codebase.
+
+### 8.8 remove() Method Removed from useQuery
+
+**Impact: MEDIUM (breaking change, refactor required where used)**
+
+In v5, the `remove()` method on the `useQuery` result was removed. Use `queryClient.removeQueries()` instead.
+
+**Why:** `remove()` removed the query from the cache without notifying observers, leading to inconsistent state. The explicit `removeQueries` call clarifies intent and runs through the standard cache mutation flow.
+
+**v4 (before):**
+
+```typescript
+const query = useQuery({
+  queryKey: ['todos'],
+  queryFn: fetchTodos,
+});
+
+const handleReset = () => {
+  query.remove();
+};
+```
+
+**v5 (after):**
+
+```typescript
+const queryClient = useQueryClient();
+const query = useQuery({
+  queryKey: ['todos'],
+  queryFn: fetchTodos,
+});
+
+const handleReset = () => {
+  queryClient.removeQueries({ queryKey: ['todos'] });
+};
+```
+
+### 8.9 initialPageParam Required for Infinite Queries
+
+**Impact: HIGH (breaking change, every useInfiniteQuery needs an update)**
+
+In v5, every `useInfiniteQuery` must declare `initialPageParam` explicitly. Defaulting `pageParam` in the destructuring is no longer the source of truth.
+
+**Why:** v4's pattern of `({ pageParam = 0 })` made the default invisible to React Query — it couldn't serialize, persist, or pass `pageParam` correctly without seeing it. An explicit option fixes this and improves TypeScript inference for `pageParam`.
+
+**v4 (before):**
+
+```typescript
+useInfiniteQuery({
+  queryKey: ['projects'],
+  queryFn: ({ pageParam = 0 }) => fetchProjects(pageParam),
+  getNextPageParam: (lastPage) => lastPage.nextCursor,
+});
+```
+
+**v5 (after):**
+
+```typescript
+useInfiniteQuery({
+  queryKey: ['projects'],
+  queryFn: ({ pageParam }) => fetchProjects(pageParam),
+  initialPageParam: 0,
+  getNextPageParam: (lastPage) => lastPage.nextCursor,
+});
+```
+
+**Related:** `getNextPageParam` and `getPreviousPageParam` should now return `null` (not `undefined`) to indicate no more pages.
+
+### 8.10 refetchPage Replaced by maxPages
+
+**Impact: MEDIUM (breaking change for infinite queries)**
+
+In v5, the `refetchPage` function (which let you choose which pages to refetch in an infinite query) was removed. Use the new `maxPages` option to bound the number of pages stored, so refetches stay manageable.
+
+**Why:** Refetching only some pages caused inconsistent data. Bounding the number of pages produces predictable behavior and naturally limits work on refetch.
+
+**v4 (before):**
+
+```typescript
+useInfiniteQuery({
+  queryKey: ['projects'],
+  queryFn: fetchProjectsPage,
+  getNextPageParam: (lastPage) => lastPage.nextCursor,
+  refetchPage: (_lastPage, index) => index < 2,
+});
+```
+
+**v5 (after):**
+
+```typescript
+useInfiniteQuery({
+  queryKey: ['projects'],
+  queryFn: fetchProjectsPage,
+  initialPageParam: 0,
+  getNextPageParam: (lastPage) => lastPage.nextCursor,
+  maxPages: 3,
+});
+```
+
+**Note:** With `maxPages` set, fetching beyond the limit drops the oldest page. Refetches always include all stored pages.
+
+### 8.11 Hydrate Component Renamed to HydrationBoundary
+
+**Impact: MEDIUM (breaking change for SSR/Next.js apps)**
+
+In v5, the `<Hydrate>` component was renamed to `<HydrationBoundary>`. The `useHydrate` hook was removed.
+
+**Why:** "Hydrate" clashed with React's `hydrate` API, causing confusion and import collisions in SSR setups (especially Next.js App Router).
+
+**v4 (before):**
+
+```typescript
+import { Hydrate, QueryClientProvider } from '@tanstack/react-query';
+
+export function Providers({ children, dehydratedState }) {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <Hydrate state={dehydratedState}>
+        {children}
+      </Hydrate>
+    </QueryClientProvider>
+  );
+}
+```
+
+**v5 (after):**
+
+```typescript
+import { HydrationBoundary, QueryClientProvider } from '@tanstack/react-query';
+
+export function Providers({ children, dehydratedState }) {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <HydrationBoundary state={dehydratedState}>
+        {children}
+      </HydrationBoundary>
+    </QueryClientProvider>
+  );
+}
+```
+
+### 8.12 refetchInterval Callback Signature Changed
+
+**Impact: LOW (breaking change for dynamic polling intervals)**
+
+In v5, the `refetchInterval` callback receives only the `query` object — no longer `(data, query)`. Read `data` from `query.state.data`.
+
+**Why:** Aligns with other callback signatures (e.g. `refetchOnWindowFocus`) and removes the data/query staleness mismatch that could occur when the two arguments disagreed.
+
+**v4 (before):**
+
+```typescript
+useQuery({
+  queryKey: ['job', id],
+  queryFn: () => fetchJob(id),
+  refetchInterval: (data, query) =>
+    data?.status === 'done' ? false : 5000,
+});
+```
+
+**v5 (after):**
+
+```typescript
+useQuery({
+  queryKey: ['job', id],
+  queryFn: () => fetchJob(id),
+  refetchInterval: (query) =>
+    query.state.data?.status === 'done' ? false : 5000,
+});
+```
+
+### 8.13 Custom context Prop Replaced by queryClient Argument
+
+**Impact: LOW (breaking change for apps with multiple QueryClients)**
+
+In v5, the `context` option was removed. Pass a custom `QueryClient` instance directly as the second argument to hooks instead.
+
+**Why:** Custom contexts existed mainly for micro-frontend isolation. Passing the client explicitly is more direct, type-safe, and avoids React context plumbing.
+
+**v4 (before):**
+
+```typescript
+const customContext = React.createContext<QueryClient | undefined>(undefined);
+
+useQuery({
+  queryKey: ['todos'],
+  queryFn: fetchTodos,
+  context: customContext,
+});
+```
+
+**v5 (after):**
+
+```typescript
+import { customQueryClient } from './my-client';
+
+useQuery(
+  { queryKey: ['todos'], queryFn: fetchTodos },
+  customQueryClient,
+);
+```
+
+### 8.14 Misc v5 Breaking Changes
+
+**Impact: LOW (smaller breaking changes worth auditing)**
+
+A grab-bag of smaller v5 breaking changes that are easy to miss:
+
+### React 18 minimum
+
+v5 requires **React 18.0+** because it depends on `useSyncExternalStore`. Apps still on React 17 must upgrade React first.
+
+### Server-side retries default to 0
+
+When running queries on the server (SSR/RSC), the default `retry` is now `0` instead of `3`. This avoids long render delays when a backend service is down. Override per-query if needed.
+
+### `getNextPageParam` / `getPreviousPageParam` should return `null`
+
+Returning `undefined` to signal "no more pages" still works but is deprecated. Prefer `null`:
+
+```typescript
+// v5 preferred
+getNextPageParam: (lastPage) => lastPage.nextCursor ?? null,
+```
+
+### `hashQueryKey` renamed to `hashKey`
+
+```typescript
+// v4
+import { hashQueryKey } from '@tanstack/react-query';
+// v5
+import { hashKey } from '@tanstack/react-query';
+```
+
+It now hashes mutation keys too, hence the rename.
+
+### `isDataEqual` removed — use `structuralSharing`
+
+```typescript
+// v4
+useQuery({ queryKey, queryFn, isDataEqual: customCheck });
+
+// v5
+import { replaceEqualDeep } from '@tanstack/react-query';
+useQuery({
+  queryKey,
+  queryFn,
+  structuralSharing: (oldData, newData) =>
+    customCheck(oldData, newData) ? oldData : replaceEqualDeep(oldData, newData),
+});
+```
+
+### Manual `pageParam` override removed
+
+You can no longer pass a `pageParam` to `fetchNextPage()` / `fetchPreviousPage()`. Drive page params through `getNextPageParam` / `getPreviousPageParam` only.
+
+### `setQueryDefaults` now merges
+
+When multiple registered defaults match a query, v5 merges them (previously the most specific won outright). Register from **most generic → most specific** so later, more-specific defaults override.
 
 ---
 
