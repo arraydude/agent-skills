@@ -1,6 +1,6 @@
 ---
 name: babysit-pr
-description: Drive a PR to merge-ready on its own: update from main, fix its failures, route unrelated CI breakage, QA it, enable auto-merge, and hand it off for review.
+description: Drive a PR to merge-ready on its own. Updates from main, fixes its failures, routes unrelated CI breakage, QAs it, enables auto-merge, and hands it off for review.
 disable-model-invocation: true
 license: MIT
 metadata:
