@@ -52,7 +52,7 @@ const { data: name } = useQuery({ ...groupOptions(1), select: (group) => group.n
 
 - Use `infiniteQueryOptions` for infinite queries.
 - Type inference via the key does not work for `getQueriesData`, which returns heterogeneous tuples. Pass the generic explicitly there.
-- ESLint `prefer-query-options` (in `recommended-strict`, added with react-query 5.96) enforces this pattern, including reusing `.queryKey` in `QueryClient` methods and filters.
+- ESLint `prefer-query-options` (in `recommended-strict`, added in eslint-plugin-query 5.96) enforces this pattern, including reusing `.queryKey` in `QueryClient` methods and filters. It does not yet check `queryClient.query()` / `infiniteQuery()`.
 - v4 has no `queryOptions`. Use a key factory (`query-key-factory`) until you migrate (`migration-single-signature`).
 
 Reference: [Query Options](https://tanstack.com/query/v5/docs/framework/react/guides/query-options) · [TypeScript: Typing Query Options](https://tanstack.com/query/v5/docs/framework/react/typescript) · [prefer-query-options](https://tanstack.com/query/v5/docs/eslint/prefer-query-options)

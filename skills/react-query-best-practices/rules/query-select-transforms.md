@@ -44,7 +44,7 @@ const { data: groupName } = useQuery({ ...groupOptions(1), select: (data) => dat
 ```
 
 - `select` re-runs only when `data` changes or the `select` function reference changes. An inline arrow therefore runs on every render. Hoist it to module scope, or wrap it in `useCallback` when it closes over props.
-- `select` runs on data that is already cached, so it is not the place to signal errors. Validate in the `queryFn` if bad data should fail the query. The docs warn that a `select` returning an error leaves `data` undefined while `isSuccess` is `true`. Since v5.102 (#11011, #11161), a throwing `select` also resets `isPlaceholderData`, and since v5.107 (#12540) repeated identical select errors no longer cause render loops.
-- In `useQueries`, an inline `select` cannot infer its argument type and falls back to `unknown`. Annotate it, or use `queryOptions` (v5).
+- `select` runs on data that is already cached, so it is not the place to signal errors. Validate in the `queryFn` if bad data should fail the query. A throwing `select` moves only this observer's result to `status: 'error'`, keeping the last selected `data`; the cache entry stays `success`. Since v5.102 (#11011, #11161), a throwing `select` also resets `isPlaceholderData`, and since v5.107 (#12540) repeated identical select errors no longer cause render loops.
+- In `useQueries`, an inline `select` cannot infer its argument type and falls back to `unknown`. Annotate it, or put `select` inside the `queryOptions(...)` call (v5). Spreading `queryOptions` and adding `select` next to it still infers `unknown`.
 
 Reference: [Render Optimizations](https://tanstack.com/query/v5/docs/framework/react/guides/render-optimizations) · [Query Options](https://tanstack.com/query/v5/docs/framework/react/guides/query-options) · [v4 useQuery: select](https://tanstack.com/query/v4/docs/framework/react/reference/useQuery)

@@ -26,9 +26,7 @@ useQuery({ queryKey: ['todos'], queryFn: fetchTodos, meta: { toast: 'oops' } });
 ```typescript
 import '@tanstack/react-query';
 
-interface AppMeta extends Record<string, unknown> {
-  errorMessage?: string;
-}
+type AppMeta = { errorMessage?: string }; // a type alias, so unknown keys like `toats` are rejected
 
 type AppQueryKey = ['todos' | 'users' | 'settings', ...ReadonlyArray<unknown>];
 
@@ -50,6 +48,6 @@ useQuery({ queryKey: ['todoz'], queryFn: fetchTodos }); // type error: not a reg
 
 - The `meta` types must extend `Record<string, unknown>`. Key types must extend an array type.
 - Registered meta pairs well with global callbacks such as `new QueryCache({ onError: (error, query) => toast(query.meta?.errorMessage) })`.
-- v4 has no `Register`; its errors are `unknown`. Upgrade first (see `migration-error-type-default`).
+- v4 has no `Register`; its errors are `unknown`. v4 can still type meta by augmenting the `QueryMeta` / `MutationMeta` interfaces. Upgrade first (see `migration-error-type-default`).
 
 Reference: [TypeScript](https://tanstack.com/query/v5/docs/framework/react/typescript#registering-a-global-error)

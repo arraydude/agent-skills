@@ -19,7 +19,7 @@ useQuery({
   refetchOnMount: false,
   refetchOnWindowFocus: false,
   refetchOnReconnect: false,
-}); // staleTime is still 0, but nothing ever refreshes the data
+}); // staleTime is still 0, but only explicit invalidation refreshes the data
 ```
 
 **Correct (tune staleTime, keep the triggers):**
@@ -43,7 +43,7 @@ useQuery({
 });
 ```
 
-- In v5 these callbacks receive only `query`. If you need data, read `query.state.data`, which has not been through `select` (see `migration-refetch-interval-callback`).
+- These callbacks receive only `query` (v4 and v5). If you need data, read `query.state.data`, which has not been through `select`.
 - `staleTime: 'static'` (v5.79+) blocks even the `'always'` settings.
 - `refetchOnReconnect` defaults to `false` under `networkMode: 'always'`.
 - v5 detects focus only through `visibilitychange`, not the `focus` event. If refocusing doesn't refetch in development, turn off Chrome DevTools > Rendering > "Emulate a focused page".

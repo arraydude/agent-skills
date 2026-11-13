@@ -80,7 +80,7 @@ Tags below: `[v5]` = v5 only; `[v5.102+]` = needs that minor. No tag = v4 and v5
 - `mutation-callback-separation` - Cache logic in the hook, UI effects at the call site
 - `mutation-state-across-components` [v5] - `useMutationState` to read mutations elsewhere
 - `mutation-scope-serial` [v5.31+] - Shared `scope.id` runs mutations in order
-- `mutation-options-factory` [v5.82+] - Share mutation definitions with `mutationOptions`
+- `mutation-options-factory` [v5.89+] - Share mutation definitions with `mutationOptions`
 
 ### 3. Caching Strategy (HIGH)
 

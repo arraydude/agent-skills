@@ -4,7 +4,7 @@ impact: MEDIUM
 impactDescription: one typed definition reused by hooks, defaults and mutation-state filters
 tags: mutation, mutationOptions, mutationKey, typescript
 versions: v5
-since: "5.82"
+since: "5.89"
 ---
 
 ## Share Mutation Definitions With mutationOptions
@@ -46,6 +46,7 @@ function SavingIndicator() {
 
 - The options live outside any component, so callbacks use `context.client` (5.89+) instead of `useQueryClient()`.
 - The overload without `mutationKey` suits mutations you never need to look up by key.
-- v4 has no `mutationOptions`. Use a custom hook there (see `mutation-callback-separation`).
+- `mutationOptions` itself shipped in 5.82; the `context` argument used above needs 5.89.
+- v4.44 has a backported `mutationOptions` without `context.client`, and v4 has no `useMutationState`: read the pending state with `useIsMutating({ mutationKey })`. Older v4: use a custom hook (see `mutation-callback-separation`).
 
 Reference: [mutationOptions](https://tanstack.com/query/v5/docs/framework/react/reference/functions/mutationOptions) · [Mutations](https://tanstack.com/query/v5/docs/framework/react/guides/mutations)

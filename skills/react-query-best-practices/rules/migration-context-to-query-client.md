@@ -15,8 +15,13 @@ v5 removed the `context` option from hooks and the `contextSharing` prop from `Q
 ```typescript
 const customContext = React.createContext<QueryClient | undefined>(undefined);
 
+<QueryClientProvider client={queryClient} context={customContext}>
+  <App />
+</QueryClientProvider>;
+
 useQuery({ queryKey: ['todos'], queryFn: fetchTodos, context: customContext });
 
+// contextSharing was already deprecated in v4
 <QueryClientProvider client={queryClient} contextSharing={true}>
   <App />
 </QueryClientProvider>;

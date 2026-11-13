@@ -41,19 +41,19 @@ const { mutate, isPending, isError, variables, submittedAt } = useMutation({
 </ul>
 ```
 
-**Correct (v4):**
+**Correct (v4; use `isLoading` before 4.40):**
 
 ```typescript
-const { isLoading, variables } = useMutation({
+const { isPending, variables } = useMutation({
   mutationFn: (text: string) => api.addTodo(text),
   onSettled: () => queryClient.invalidateQueries({ queryKey: ['todos'] }),
 });
 
-{isLoading && <li style={{ opacity: 0.5 }}>{variables}</li>}
+{isPending && <li style={{ opacity: 0.5 }}>{variables}</li>}
 ```
 
-- v5: `variables` are kept after an error, so you can offer a retry. `submittedAt` gives each pending item a stable key.
+- `variables` are kept after an error, so you can offer a retry (v4 types them `TVariables | undefined` in every status, so pass `variables!`). v5's `submittedAt` gives each pending item a stable key.
 - When several components need to show the update, write to the cache instead (`mutation-optimistic-updates`). When the mutation runs in a different component from the list, use `mutation-state-across-components` (v5).
-- The v4 docs describe only the cache-based approach. Support in v4 rests on the 4.29 types: `variables` is exposed on the result, `submittedAt` is not.
+- The v4 docs describe only the cache-based approach, but v4 exposes `variables` on the result from 4.0 (it is part of the mutation state, set before `onMutate` runs). `submittedAt` is v5-only.
 
 Reference: [Optimistic Updates: Via the UI](https://tanstack.com/query/v5/docs/framework/react/guides/optimistic-updates#via-the-ui) · [Migrating to v5: Simplified optimistic updates](https://tanstack.com/query/v5/docs/framework/react/guides/migrating-to-v5#simplified-optimistic-updates)

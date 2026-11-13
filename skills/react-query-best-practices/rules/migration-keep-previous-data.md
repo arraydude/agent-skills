@@ -42,7 +42,8 @@ npx jscodeshift@latest ./src --extensions=ts,tsx --parser=tsx \
 The codemod moves the option only: rename `isPreviousData` to `isPlaceholderData` by hand.
 
 **Behaviour differences to check after migrating:**
-- `placeholderData` always puts the query in `success` status. `keepPreviousData` reported the previous query's status, which could be `error` after a failed background refetch.
+- Both report `success` while showing the previous data. The difference: v4 `keepPreviousData` kept data only when the previous query was in `success`; v5 `placeholderData: keepPreviousData` keeps the last defined data even if that query errored.
+- The codemod converts only the literal `keepPreviousData: true` (other values get a warning) and adds the `keepPreviousData` import. It covers `useQuery`, `useInfiniteQuery`, `useQueries`, `setQueryDefaults` and `new QueryClient({ defaultOptions })`.
 - `dataUpdatedAt` stays `0` while placeholder data is shown. `keepPreviousData` exposed the previous data's timestamp.
 - Suspense hooks do not accept `placeholderData`; use `startTransition` there.
 

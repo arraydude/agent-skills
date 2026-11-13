@@ -59,7 +59,7 @@ queryClient.invalidateQueries({ queryKey: todoKeys.lists() });
 ```
 
 - Since 5.103 (#11502), a partial filter with trailing `undefined` items no longer matches shorter keys: `{ queryKey: ['todos', undefined] }` does not match `['todos']`. Build the filter without the trailing `undefined` (e.g. `id == null ? todoQueries.all() : todoQueries.detail(id).queryKey`).
-- The v5 ESLint rule `prefer-query-options` (in `recommended-strict`) flags keys typed by hand in `getQueryData` and `invalidateQueries` when a `queryOptions` factory exists.
+- The v5 ESLint rule `prefer-query-options` (in `recommended-strict`) flags inline `queryKey`/`queryFn` objects passed to query hooks and inline array keys in `QueryClient` methods and filters. It is syntactic: it fires whether or not a factory exists.
 - v5.64+ lets you constrain every key's shape app-wide by registering a `queryKey` type on `Register` (TypeScript guide).
 
 Reference: [Query Keys](https://tanstack.com/query/v5/docs/framework/react/guides/query-keys) · [Query Options](https://tanstack.com/query/v5/docs/framework/react/guides/query-options) · [Filters](https://tanstack.com/query/v5/docs/framework/react/guides/filters) · [v4 Query Keys](https://tanstack.com/query/v4/docs/framework/react/guides/query-keys)

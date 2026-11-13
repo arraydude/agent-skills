@@ -39,7 +39,9 @@ npx jscodeshift@latest ./src --extensions=ts,tsx --parser=tsx \
   --transform=./node_modules/@tanstack/react-query/build/codemods/v5/is-loading/is-loading.cjs
 ```
 
-- Review every existing `isLoading` by hand. A disabled query (`enabled: false`) is `isPending` but not `isLoading`, so swapping the names blindly changes what renders.
+- The rename keeps v4 behaviour: v4 `isLoading` is v5 `isPending`. An `isLoading` left unrenamed now means pending *and* fetching, which is false for a disabled query, so it silently changes what renders.
+- The codemod only targets `useQuery` and `useMutation` results, skips `isInitialLoading`, and once it finds a destructured `isLoading` it renames every `isLoading` identifier in that scope, unrelated ones included. Review its diff.
+- v4.40+ mutations already expose `isPending`.
 - The codemod renames the `isLoading` flag only. Replace `status === 'loading'` with `status === 'pending'` by hand, in query and mutation checks alike.
 
 Reference: [Migrating to v5](https://tanstack.com/query/v5/docs/framework/react/guides/migrating-to-v5#status-loading-has-been-changed-to-status-pending-and-isloading-has-been-changed-to-ispending-and-isinitialloading-has-now-been-renamed-to-isloading)

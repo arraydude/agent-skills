@@ -153,7 +153,7 @@ const todoQueries = {
 
 - Keys must be arrays and serializable with `JSON.stringify`. Object keys are hashed deterministically, so property order inside an object does not matter. Array item order does matter: `['todos', status, page]` and `['todos', page, status]` are different keys.
 - Function call targets are not dependencies: `fetchTodoById(todoId)` needs `todoId` in the key, not `fetchTodoById`.
-- Let the linter enforce this: `@tanstack/query/exhaustive-deps` is part of the plugin's recommended config. Use `allowlist.variables` / `allowlist.types` for stable clients or config objects (see `tooling-eslint-plugin`).
+- Let the linter enforce this: `@tanstack/query/exhaustive-deps` is part of the plugin's recommended config. Use `allowlist.variables` / `allowlist.types` (eslint-plugin-query 5.95+, not in the v4 plugin) for stable clients or config objects (see `tooling-eslint-plugin`).
 - Centralize keys with a factory (`query-key-factory`) or `queryOptions` (`query-options-helper`, v5) so the key and the `queryFn` cannot drift apart.
 
 Reference: [Query Keys](https://tanstack.com/query/v5/docs/framework/react/guides/query-keys) · [exhaustive-deps](https://tanstack.com/query/v5/docs/eslint/exhaustive-deps) · [v4 Query Keys](https://tanstack.com/query/v4/docs/framework/react/guides/query-keys)
@@ -213,7 +213,7 @@ queryClient.invalidateQueries({ queryKey: todoKeys.lists() });
 ```
 
 - Since 5.103 (#11502), a partial filter with trailing `undefined` items no longer matches shorter keys: `{ queryKey: ['todos', undefined] }` does not match `['todos']`. Build the filter without the trailing `undefined` (e.g. `id == null ? todoQueries.all() : todoQueries.detail(id).queryKey`).
-- The v5 ESLint rule `prefer-query-options` (in `recommended-strict`) flags keys typed by hand in `getQueryData` and `invalidateQueries` when a `queryOptions` factory exists.
+- The v5 ESLint rule `prefer-query-options` (in `recommended-strict`) flags inline `queryKey`/`queryFn` objects passed to query hooks and inline array keys in `QueryClient` methods and filters. It is syntactic: it fires whether or not a factory exists.
 - v5.64+ lets you constrain every key's shape app-wide by registering a `queryKey` type on `Register` (TypeScript guide).
 
 Reference: [Query Keys](https://tanstack.com/query/v5/docs/framework/react/guides/query-keys) · [Query Options](https://tanstack.com/query/v5/docs/framework/react/guides/query-options) · [Filters](https://tanstack.com/query/v5/docs/framework/react/guides/filters) · [v4 Query Keys](https://tanstack.com/query/v4/docs/framework/react/guides/query-keys)
@@ -265,7 +265,7 @@ const { data: name } = useQuery({ ...groupOptions(1), select: (group) => group.n
 
 - Use `infiniteQueryOptions` for infinite queries.
 - Type inference via the key does not work for `getQueriesData`, which returns heterogeneous tuples. Pass the generic explicitly there.
-- ESLint `prefer-query-options` (in `recommended-strict`, added with react-query 5.96) enforces this pattern, including reusing `.queryKey` in `QueryClient` methods and filters.
+- ESLint `prefer-query-options` (in `recommended-strict`, added in eslint-plugin-query 5.96) enforces this pattern, including reusing `.queryKey` in `QueryClient` methods and filters. It does not yet check `queryClient.query()` / `infiniteQuery()`.
 - v4 has no `queryOptions`. Use a key factory (`query-key-factory`) until you migrate (`migration-single-signature`).
 
 Reference: [Query Options](https://tanstack.com/query/v5/docs/framework/react/guides/query-options) · [TypeScript: Typing Query Options](https://tanstack.com/query/v5/docs/framework/react/typescript) · [prefer-query-options](https://tanstack.com/query/v5/docs/eslint/prefer-query-options)
@@ -351,7 +351,7 @@ const { data: projects } = useQuery({
 });
 ```
 
-- Calling `refetch()` on a query disabled with `skipToken` throws "Missing queryFn". If the query must also be triggered manually, use `enabled: false`.
+- Calling `refetch()` on a query disabled with `skipToken` puts the query into an error state ("Missing queryFn"); the returned promise still resolves. If the query must also be triggered manually, use `enabled: false`.
 - A disabled query with no cached data sits in `pending` (v4: `loading`) with `fetchStatus: 'idle'`, so don't show a spinner from that alone. Use `isLoading` in v5 (`isPending && isFetching`) or `isInitialLoading` in v4 (see `query-status-vs-fetch-status`).
 - v5.48+: `enabled` also accepts `(query) => boolean`. v5.83+: the result exposes `isEnabled`.
 - A disabled query also ignores `invalidateQueries` / `refetchQueries` calls.
@@ -442,7 +442,8 @@ return <List items={data} />;
 **Alternative (data first, keep cached data visible when a refetch fails):**
 
 ```typescript
-// v5 names; in v4 use isLoading instead of isPending
+// v5 names; in v4 use isLoading instead of isPending, and narrow error (it is unknown):
+// error instanceof Error ? error.message : 'Error'
 const { data, error, isPending } = useQuery({ queryKey: ['todos'], queryFn: fetchTodos });
 
 if (data !== undefined) return <List items={data} stale={!!error} />;
@@ -496,8 +497,8 @@ const { data: groupName } = useQuery({ ...groupOptions(1), select: (data) => dat
 ```
 
 - `select` re-runs only when `data` changes or the `select` function reference changes. An inline arrow therefore runs on every render. Hoist it to module scope, or wrap it in `useCallback` when it closes over props.
-- `select` runs on data that is already cached, so it is not the place to signal errors. Validate in the `queryFn` if bad data should fail the query. The docs warn that a `select` returning an error leaves `data` undefined while `isSuccess` is `true`. Since v5.102 (#11011, #11161), a throwing `select` also resets `isPlaceholderData`, and since v5.107 (#12540) repeated identical select errors no longer cause render loops.
-- In `useQueries`, an inline `select` cannot infer its argument type and falls back to `unknown`. Annotate it, or use `queryOptions` (v5).
+- `select` runs on data that is already cached, so it is not the place to signal errors. Validate in the `queryFn` if bad data should fail the query. A throwing `select` moves only this observer's result to `status: 'error'`, keeping the last selected `data`; the cache entry stays `success`. Since v5.102 (#11011, #11161), a throwing `select` also resets `isPlaceholderData`, and since v5.107 (#12540) repeated identical select errors no longer cause render loops.
+- In `useQueries`, an inline `select` cannot infer its argument type and falls back to `unknown`. Annotate it, or put `select` inside the `queryOptions(...)` call (v5). Spreading `queryOptions` and adding `select` next to it still infers `unknown`.
 
 Reference: [Render Optimizations](https://tanstack.com/query/v5/docs/framework/react/guides/render-optimizations) · [Query Options](https://tanstack.com/query/v5/docs/framework/react/guides/query-options) · [v4 useQuery: select](https://tanstack.com/query/v4/docs/framework/react/reference/useQuery)
 
@@ -510,7 +511,7 @@ Use `initialData` only for complete data you trust: it is persisted to the cache
 | Aspect | initialData | placeholderData |
 |--------|-------------|-----------------|
 | Written to cache | Yes | No |
-| Freshness | Treated as fetched now (or at `initialDataUpdatedAt`), so `staleTime` applies | Only shown while the cache is empty, so the real fetch always runs |
+| Freshness | Treated as fetched now (or at `initialDataUpdatedAt`), so `staleTime` applies | Only shown while the cache is empty; never counts as cached data, so it never prevents the fetch |
 | Result flag | none | `isPlaceholderData: true` |
 
 **Incorrect (partial preview data persisted as if complete):**
@@ -520,7 +521,7 @@ useQuery({
   queryKey: ['blogPost', id],
   queryFn: () => fetchPost(id),
   // list items only have title + snippet, but this is now "the" cached post
-  initialData: () => queryClient.getQueryData(['blogPosts'])?.find((p) => p.id === id),
+  initialData: () => queryClient.getQueryData<Post[]>(['blogPosts'])?.find((p) => p.id === id),
 });
 ```
 
@@ -530,13 +531,13 @@ useQuery({
 useQuery({
   queryKey: ['blogPost', id],
   queryFn: () => fetchPost(id),
-  placeholderData: () => queryClient.getQueryData(['blogPosts'])?.find((p) => p.id === id),
+  placeholderData: () => queryClient.getQueryData<Post[]>(['blogPosts'])?.find((p) => p.id === id),
 });
 
 useQuery({
   queryKey: ['todo', todoId],
   queryFn: () => fetchTodo(todoId),
-  initialData: () => queryClient.getQueryData(['todos'])?.find((t) => t.id === todoId),
+  initialData: () => queryClient.getQueryData<Todo[]>(['todos'])?.find((t) => t.id === todoId),
   initialDataUpdatedAt: () => queryClient.getQueryState(['todos'])?.dataUpdatedAt,
 });
 ```
@@ -564,7 +565,7 @@ const { data, isPreviousData } = useQuery({
 });
 ```
 
-- v5: a query with placeholder data starts in `success` status, and `isPlaceholderData: true` narrows the result type (5.65).
+- A query with placeholder data reports `status: 'success'`. In v5.65+, `isPlaceholderData: true` also narrows the result type.
 - v5 suspense hooks have no `placeholderData`: wrap key changes in `startTransition` instead.
 - Infinite queries: `initialData` and `placeholderData` must have the `{ pages, pageParams }` shape.
 
@@ -574,7 +575,7 @@ Reference: [Placeholder Query Data](https://tanstack.com/query/v5/docs/framework
 
 **Impact: LOW (avoids re-renders from fields the component never reads)** · **Versions:** v4, v5
 
-The query result is a Proxy that records which fields you read. The component re-renders only when one of those fields changes. Read only the fields you need, and never use object rest on the result.
+The query result records which fields you read (a Proxy in v5, property getters in v4). The component re-renders only when one of those fields changes. Read only the fields you need, and never use object rest on the result.
 
 **Incorrect (rest destructuring subscribes to every field):**
 
@@ -594,7 +595,7 @@ const { data, isError } = useQuery({ queryKey: ['todos'], queryFn: fetchTodos })
 const useTodos = () => useQuery({ queryKey: ['todos'], queryFn: fetchTodos });
 ```
 
-The result object itself is a new reference on every render; only `data` is kept stable. Put the fields you use in hook dependency arrays, not the whole result:
+The result object itself is a new reference on every render; its fields keep their identity until they change. Put the fields you use in hook dependency arrays, not the whole result:
 
 ```typescript
 const todosQuery = useQuery({ queryKey: ['todos'], queryFn: fetchTodos });
@@ -616,7 +617,7 @@ Reference: [Render Optimizations](https://tanstack.com/query/v5/docs/framework/r
 
 **Impact: CRITICAL (every component showing the changed data gets fresh data)** · **Versions:** v4, v5
 
-After a mutation succeeds, call `invalidateQueries` with the key prefix it affects. This marks every matching query stale, even one with a long `staleTime`, and refetches the ones currently on screen. Return or `await` the promise so the mutation stays pending until that refetch finishes.
+After a mutation succeeds, call `invalidateQueries` with the key prefix it affects. This marks every matching query stale, even one with a long `staleTime` (v5 `staleTime: 'static'` is the exception), and refetches the ones currently on screen. Return or `await` the promise so the mutation stays pending until that refetch finishes.
 
 **Incorrect (refetching one observer by hand):**
 
@@ -656,7 +657,7 @@ onSuccess: () =>
 // v5
 <button disabled={mutation.isPending}>Save</button>
 // v4
-<button disabled={mutation.isLoading}>Save</button>
+<button disabled={mutation.isLoading}>Save</button> {/* v4.40+: isPending */}
 ```
 
 - By default only active queries refetch (`refetchType: 'active'`). Use `'all'`, `'inactive'` or `'none'` to change that. Use `exact: true` or a `predicate` for narrower matches.
@@ -701,20 +702,20 @@ const { mutate, isPending, isError, variables, submittedAt } = useMutation({
 </ul>
 ```
 
-**Correct (v4):**
+**Correct (v4; use `isLoading` before 4.40):**
 
 ```typescript
-const { isLoading, variables } = useMutation({
+const { isPending, variables } = useMutation({
   mutationFn: (text: string) => api.addTodo(text),
   onSettled: () => queryClient.invalidateQueries({ queryKey: ['todos'] }),
 });
 
-{isLoading && <li style={{ opacity: 0.5 }}>{variables}</li>}
+{isPending && <li style={{ opacity: 0.5 }}>{variables}</li>}
 ```
 
-- v5: `variables` are kept after an error, so you can offer a retry. `submittedAt` gives each pending item a stable key.
+- `variables` are kept after an error, so you can offer a retry (v4 types them `TVariables | undefined` in every status, so pass `variables!`). v5's `submittedAt` gives each pending item a stable key.
 - When several components need to show the update, write to the cache instead (`mutation-optimistic-updates`). When the mutation runs in a different component from the list, use `mutation-state-across-components` (v5).
-- The v4 docs describe only the cache-based approach. Support in v4 rests on the 4.29 types: `variables` is exposed on the result, `submittedAt` is not.
+- The v4 docs describe only the cache-based approach, but v4 exposes `variables` on the result from 4.0 (it is part of the mutation state, set before `onMutate` runs). `submittedAt` is v5-only.
 
 Reference: [Optimistic Updates: Via the UI](https://tanstack.com/query/v5/docs/framework/react/guides/optimistic-updates#via-the-ui) · [Migrating to v5: Simplified optimistic updates](https://tanstack.com/query/v5/docs/framework/react/guides/migrating-to-v5#simplified-optimistic-updates)
 
@@ -861,7 +862,7 @@ const { mutate } = useMutation({
 
 mutate(todo, {
   onSuccess: () => toast.success('Saved!'),
-  onError: (error) => toast.error(error.message),
+  onError: (error) => toast.error(error instanceof Error ? error.message : 'Save failed'), // v4 types error as unknown
 });
 ```
 
@@ -1020,7 +1021,7 @@ const save = useMutation({
 });
 
 save.mutate(draftV1);
-save.mutate(draftV2); // starts paused and runs after draftV1 settles
+save.mutate(draftV2); // onMutate runs now; mutationFn waits paused until draftV1 settles
 ```
 
 - `isPaused` is `true` while a mutation waits in its scope queue, and also while it waits for the network to come back. Account for both before showing "offline" UI.
@@ -1032,7 +1033,7 @@ Reference: [Mutations: Mutation Scopes](https://tanstack.com/query/v5/docs/frame
 
 ### 2.9 Share Mutation Definitions With mutationOptions
 
-**Impact: MEDIUM (one typed definition reused by hooks, defaults and mutation-state filters)** · **Versions:** v5 · **Since:** 5.82
+**Impact: MEDIUM (one typed definition reused by hooks, defaults and mutation-state filters)** · **Versions:** v5 · **Since:** 5.89
 
 Define each mutation once with `mutationOptions` and pass the result to `useMutation`. It returns the same object, fully typed. If you include a `mutationKey`, that overload requires it, so `useMutationState` filters can reuse the exact key.
 
@@ -1071,7 +1072,8 @@ function SavingIndicator() {
 
 - The options live outside any component, so callbacks use `context.client` (5.89+) instead of `useQueryClient()`.
 - The overload without `mutationKey` suits mutations you never need to look up by key.
-- v4 has no `mutationOptions`. Use a custom hook there (see `mutation-callback-separation`).
+- `mutationOptions` itself shipped in 5.82; the `context` argument used above needs 5.89.
+- v4.44 has a backported `mutationOptions` without `context.client`, and v4 has no `useMutationState`: read the pending state with `useIsMutating({ mutationKey })`. Older v4: use a custom hook (see `mutation-callback-separation`).
 
 Reference: [mutationOptions](https://tanstack.com/query/v5/docs/framework/react/reference/functions/mutationOptions) · [Mutations](https://tanstack.com/query/v5/docs/framework/react/guides/mutations)
 
@@ -1114,7 +1116,7 @@ useQuery({
 ```
 
 - `Infinity` means the data is never stale until you invalidate it. v5.79+ adds `'static'`, which also ignores `invalidateQueries` (see `cache-static-vs-infinity`). v4 accepts only a number.
-- Garbage collection is a separate setting. Inactive queries are removed after 5 minutes by default: `gcTime` in v5, `cacheTime` in v4 (see `migration-cache-time-to-gc-time`). Don't restate defaults (`gcTime` 5 min, `retry` 3 on the client and 0 on the server in v5) in your config.
+- Garbage collection is a separate setting. Inactive queries are removed after 5 minutes by default: `gcTime` in v5, `cacheTime` in v4 (see `migration-cache-time-to-gc-time`). Don't restate defaults (`gcTime` 5 min on the client, `retry` 3 on the client and 0 on the server in v5) in your config.
 - `refetchInterval` polls regardless of `staleTime`.
 
 Reference: [Important Defaults](https://tanstack.com/query/v5/docs/framework/react/guides/important-defaults) · [Caching](https://tanstack.com/query/v5/docs/framework/react/guides/caching) · [v4 Important Defaults](https://tanstack.com/query/v4/docs/framework/react/guides/important-defaults)
@@ -1134,7 +1136,7 @@ useQuery({
   refetchOnMount: false,
   refetchOnWindowFocus: false,
   refetchOnReconnect: false,
-}); // staleTime is still 0, but nothing ever refreshes the data
+}); // staleTime is still 0, but only explicit invalidation refreshes the data
 ```
 
 **Correct (tune staleTime, keep the triggers):**
@@ -1158,7 +1160,7 @@ useQuery({
 });
 ```
 
-- In v5 these callbacks receive only `query`. If you need data, read `query.state.data`, which has not been through `select` (see `migration-refetch-interval-callback`).
+- These callbacks receive only `query` (v4 and v5). If you need data, read `query.state.data`, which has not been through `select`.
 - `staleTime: 'static'` (v5.79+) blocks even the `'always'` settings.
 - `refetchOnReconnect` defaults to `false` under `networkMode: 'always'`.
 - v5 detects focus only through `visibilitychange`, not the `focus` event. If refocusing doesn't refetch in development, turn off Chrome DevTools > Rendering > "Emulate a focused page".
@@ -1170,7 +1172,7 @@ Reference: [Window Focus Refetching](https://tanstack.com/query/v5/docs/framewor
 
 **Impact: MEDIUM (choose whether manual invalidation can still refresh the data)** · **Versions:** v5 · **Since:** 5.79
 
-Both values stop staleness-based refetches. Use `Infinity` when the data changes only through your own invalidation, for example WebSocket events or mutations. Use `'static'` (since 5.79, #9139) for data that cannot change while the app runs. With `'static'`, `invalidateQueries` has no effect, and `refetchOnMount`, `refetchOnWindowFocus` and `refetchOnReconnect` set to `'always'` are blocked as well.
+Both values stop staleness-based refetches. Use `Infinity` when the data changes only through your own invalidation, for example WebSocket events or mutations. Use `'static'` (since 5.79, #9139) for data that cannot change while the app runs. With `'static'`, `invalidateQueries` and `refetchQueries` skip the query (only while an observer with `'static'` is mounted: `refetchType: 'inactive'` or `'all'` still refetches an unobserved one), and `refetchOnMount`, `refetchOnWindowFocus` and `refetchOnReconnect` set to `'always'` are blocked as well.
 
 **Incorrect (`'static'` on data that mutations update):**
 
@@ -1404,7 +1406,7 @@ function App() {
 - Queries inside `useSuspenseQueries` can't use `enabled`, `placeholderData` or `throwOnError`, the same as `useSuspenseQuery`.
 - Serial fetching is what you want for dependent queries, because suspense queries in one component run in order.
 
-v4 users: see `migration-suspense-hooks` for moving from `suspense: true` to the v5 hooks.
+v4.39+ also exports `useSuspenseQueries`, and this code compiles there. Older v4: see `migration-suspense-hooks` for moving off `suspense: true`.
 
 Reference: [Performance & Request Waterfalls](https://tanstack.com/query/v5/docs/framework/react/guides/request-waterfalls#single-component-waterfalls--serial-queries), [useSuspenseQueries](https://tanstack.com/query/v5/docs/framework/react/reference/functions/useSuspenseQueries)
 
@@ -1440,7 +1442,7 @@ function Article({ id }) {
 }
 ```
 
-**Correct (v5, with Suspense, 5.47+): prefetch above the boundary**
+**Correct (with Suspense, v5.47+ or v4.43+): prefetch above the boundary**
 
 ```typescript
 function ArticleLayout({ id }) {
@@ -1480,9 +1482,9 @@ Reference: [Performance & Request Waterfalls](https://tanstack.com/query/v5/docs
 
 ### 5.3 Fetch Infinite Query Pages Safely
 
-**Impact: HIGH (overlapping page fetches overwrite each other in the single shared cache entry)** · **Versions:** v4, v5
+**Impact: HIGH (a page fetch silently cancels the fetch already running on the single shared cache entry)** · **Versions:** v4, v5
 
-All pages of an infinite query share one cache entry, and only one fetch can run at a time. Calling `fetchNextPage` while a fetch is in progress can overwrite a background refresh. Guard automatic triggers such as scroll handlers with `hasNextPage && !isFetching`, and derive page params from `getNextPageParam`.
+All pages of an infinite query share one cache entry, and only one fetch can run at a time. Calling `fetchNextPage` while a fetch is in progress cancels that fetch, a background refresh included. Guard automatic triggers such as scroll handlers with `hasNextPage && !isFetching`, and derive page params from `getNextPageParam`.
 
 **Incorrect (fires on every scroll event, even mid-refetch):**
 
@@ -1509,7 +1511,7 @@ const { data, fetchNextPage, hasNextPage, isFetching, isFetchingNextPage } = use
 const { data, fetchNextPage, hasNextPage, isFetching, isFetchingNextPage } = useInfiniteQuery({
   queryKey: ['projects'],
   queryFn: ({ pageParam = 0 }) => fetchProjects(pageParam),
-  getNextPageParam: (lastPage) => lastPage.nextCursor, // undefined = no more pages
+  getNextPageParam: (lastPage) => lastPage.nextCursor, // undefined, null or false = no more pages
 });
 
 <List onEndReached={() => hasNextPage && !isFetching && fetchNextPage()} />;
@@ -1518,16 +1520,16 @@ const { data, fetchNextPage, hasNextPage, isFetching, isFetchingNextPage } = use
 **Keep `pages` and `pageParams` aligned when editing the cache:**
 
 ```typescript
-queryClient.setQueryData(['projects'], (data) => ({
+queryClient.setQueryData<InfiniteData<Page>>(['projects'], (data) => data && ({
   pages: data.pages.slice(1),
   pageParams: data.pageParams.slice(1),
 }));
 ```
 
 - Use `isFetchingNextPage` (not `isFetching`) for the "Loading more..." indicator. `isFetching` is also true during background refetches.
-- On refetch, pages are refetched one after another starting from the first, so cursors are never stale. Many pages means many requests: in v5 limit them with `maxPages`, which needs both `getNextPageParam` and `getPreviousPageParam`.
-- v5 ESLint `@tanstack/query/infinite-query-property-order` (recommended, auto-fixable) requires `queryFn`, then `getPreviousPageParam`, then `getNextPageParam`, for type inference.
-- To deliberately allow overlapping fetches, pass `fetchNextPage({ cancelRefetch: false })`.
+- On refetch, pages are refetched one after another starting from the first, so cursors are never stale. Many pages means many requests: in v5 limit them with `maxPages`. Add `getPreviousPageParam` too, so users can scroll back to the pages `maxPages` dropped.
+- v5 ESLint `@tanstack/query/infinite-query-property-order` (recommended, auto-fixable) requires `queryFn` before `getPreviousPageParam` / `getNextPageParam`, for type inference.
+- `fetchNextPage` defaults to `cancelRefetch: true`: it cancels an in-flight fetch and starts the page fetch. With `cancelRefetch: false`, calls made while a fetch runs are ignored and reuse that fetch.
 
 Reference: [Infinite Queries](https://tanstack.com/query/v5/docs/framework/react/guides/infinite-queries), [v4 Infinite Queries](https://tanstack.com/query/v4/docs/framework/react/guides/infinite-queries)
 
@@ -1633,7 +1635,7 @@ Reference: [Important Defaults](https://tanstack.com/query/v5/docs/framework/rea
 
 **Impact: MEDIUM (recovers events missed while disconnected)** · **Versions:** v4, v5
 
-While the socket is down, events are lost and nothing gets marked invalidated. On reconnect, invalidate every key the socket manages, or the whole cache. Do not filter on `query.state.isInvalidated`: that flag resets on every successful fetch, and invalidated queries that are on screen have already refetched. That filter therefore matches only inactive queries, which the default `refetchType: 'active'` does not refetch, so the handler does almost nothing.
+While the socket is down, events are lost and nothing gets marked invalidated. On reconnect, invalidate every key the socket manages, or the whole cache. Do not filter on `query.state.isInvalidated`: that flag resets on every successful fetch, and invalidated queries that are on screen have already refetched. That filter therefore matches mostly inactive queries (plus disabled ones and those whose last fetch failed), which the default `refetchType: 'active'` does not refetch, so the handler does almost nothing.
 
 **Incorrect (matches almost nothing):**
 
@@ -1824,9 +1826,7 @@ useQuery({ queryKey: ['todos'], queryFn: fetchTodos, meta: { toast: 'oops' } });
 ```typescript
 import '@tanstack/react-query';
 
-interface AppMeta extends Record<string, unknown> {
-  errorMessage?: string;
-}
+type AppMeta = { errorMessage?: string }; // a type alias, so unknown keys like `toats` are rejected
 
 type AppQueryKey = ['todos' | 'users' | 'settings', ...ReadonlyArray<unknown>];
 
@@ -1848,7 +1848,7 @@ useQuery({ queryKey: ['todoz'], queryFn: fetchTodos }); // type error: not a reg
 
 - The `meta` types must extend `Record<string, unknown>`. Key types must extend an array type.
 - Registered meta pairs well with global callbacks such as `new QueryCache({ onError: (error, query) => toast(query.meta?.errorMessage) })`.
-- v4 has no `Register`; its errors are `unknown`. Upgrade first (see `migration-error-type-default`).
+- v4 has no `Register`; its errors are `unknown`. v4 can still type meta by augmenting the `QueryMeta` / `MutationMeta` interfaces. Upgrade first (see `migration-error-type-default`).
 
 Reference: [TypeScript](https://tanstack.com/query/v5/docs/framework/react/typescript#registering-a-global-error)
 
@@ -2024,7 +2024,7 @@ Rules in the current (v5) plugin. The release that added each rule is in parenth
 |---|---|---|
 | `exhaustive-deps` | recommended | queryFn variables missing from `queryKey` (`query-keys-as-dependencies`) |
 | `stable-query-client` | recommended, fixable | `new QueryClient()` inside a component or hook |
-| `no-rest-destructuring` (5.6) | recommended | `{ data, ...rest } = useQuery()` (`query-tracked-properties`) |
+| `no-rest-destructuring` (5.6) | recommended (warn) | `{ data, ...rest } = useQuery()` (`query-tracked-properties`) |
 | `no-unstable-deps` (5.52) | recommended | the query or mutation result object in hook dependency arrays |
 | `infinite-query-property-order` (5.57) | recommended, fixable | property order that breaks infinite-query type inference |
 | `no-void-query-fn` (5.71) | recommended | a `queryFn` with no return value; needs typed linting, and reports nothing under Oxlint |
@@ -2033,7 +2033,7 @@ Rules in the current (v5) plugin. The release that added each rule is in parenth
 
 - `exhaustive-deps` accepts `allowlist.variables` and `allowlist.types` for stable clients and config objects.
 - Turn off `no-rest-destructuring` only if you set `notifyOnChangeProps` manually.
-- v4: the plugin ships four rules, all in `recommended`: `exhaustive-deps`, `stable-query-client`, `prefer-query-object-syntax` and `no-deprecated-options`. The last two flag code v5 removes (positional signatures, and options such as `onSuccess` on `useQuery`), so turning them on before a v5 upgrade shrinks the migration. v5 dropped `prefer-query-object-syntax`: delete it from the config when upgrading.
+- v4: the plugin ships four rules, all in `recommended`: `exhaustive-deps`, `stable-query-client`, `prefer-query-object-syntax` and `no-deprecated-options`. The last two flag code v5 removes (positional signatures, and options such as `onSuccess` on `useQuery`), so turning them on before a v5 upgrade shrinks the migration. v5 dropped both: delete `prefer-query-object-syntax` and `no-deprecated-options` from any explicit rule config when upgrading, or ESLint fails with "Definition for rule … was not found".
 
 Reference: [ESLint Plugin Query](https://tanstack.com/query/v5/docs/eslint/eslint-plugin-query) · [v4 ESLint Plugin Query](https://tanstack.com/query/v4/docs/eslint/eslint-plugin-query)
 
@@ -2135,7 +2135,7 @@ useQuery({
 ```
 
 - Return a value from the `queryFn`. Resolving `undefined` is treated as a failure, so resolve `null` to cache "nothing". The ESLint rule `no-void-query-fn` catches missing returns (requires typed linting).
-- Errors are retried 3 times with exponential backoff on the client before `error` is set. In v5 the in-progress error is exposed as `failureReason` until the last attempt.
+- Errors are retried 3 times with exponential backoff before `error` is set (v5 doesn't retry on the server by default; v4 does). The in-progress error is exposed as `failureReason` until the last attempt (v4.13+ and v5).
 - v5 types `error` as `Error` by default (v4: `unknown`). If you throw something other than an `Error`, set the generic or register a global error type.
 
 Reference: [Query Functions](https://tanstack.com/query/v5/docs/framework/react/guides/query-functions) · [Query Retries](https://tanstack.com/query/v5/docs/framework/react/guides/query-retries) · [v4 Query Functions](https://tanstack.com/query/v4/docs/framework/react/guides/query-functions)
@@ -2184,7 +2184,7 @@ npx jscodeshift@latest ./src --extensions=ts,tsx --parser=tsx \
 ```
 
 - `--parser=tsx` is required for TypeScript files, or the transform is not applied. For `.js`/`.jsx`, use `--extensions=js,jsx` and drop the parser flag.
-- The codemod skips calls whose first argument is already an object with `queryKey`/`mutationKey`. Calls it cannot infer are logged, sometimes with only the file name ("An unknown error occurred while processing"), so fix those by hand. On 5.107.1 it left positional `useInfiniteQuery`, `prefetchQuery`/`fetchQuery` and `getQueryData(key, filters)` calls untouched. Run prettier/eslint afterwards.
+- The codemod skips calls whose first argument is already an object with `queryKey`/`mutationKey`. Calls it cannot infer are logged, sometimes with only the file name ("An unknown error occurred while processing"), so fix those by hand. It converts `useQuery`, `useMutation`, `useIsFetching`, `useIsMutating` and the `QueryClient` filter and fetch methods, but only on clients created in the same file with `new QueryClient()` or `useQueryClient()`: calls on an imported client are skipped without a warning. Two-argument `fetchQuery(key, fn)` / `prefetchQuery(key, fn)` fail with that unknown error. `useInfiniteQuery`, `useQueries`, `getQueryData(key, filters)` and `setQueriesData` are not handled. Run prettier/eslint afterwards.
 - The codemod does not move `fetchQuery`/`prefetchQuery`/`ensureQueryData` to `query()`; see `query-imperative-query-method`.
 
 Reference: [Migrating to v5](https://tanstack.com/query/v5/docs/framework/react/guides/migrating-to-v5#supports-a-single-signature-one-object)
@@ -2224,7 +2224,9 @@ npx jscodeshift@latest ./src --extensions=ts,tsx --parser=tsx \
   --transform=./node_modules/@tanstack/react-query/build/codemods/v5/is-loading/is-loading.cjs
 ```
 
-- Review every existing `isLoading` by hand. A disabled query (`enabled: false`) is `isPending` but not `isLoading`, so swapping the names blindly changes what renders.
+- The rename keeps v4 behaviour: v4 `isLoading` is v5 `isPending`. An `isLoading` left unrenamed now means pending *and* fetching, which is false for a disabled query, so it silently changes what renders.
+- The codemod only targets `useQuery` and `useMutation` results, skips `isInitialLoading`, and once it finds a destructured `isLoading` it renames every `isLoading` identifier in that scope, unrelated ones included. Review its diff.
+- v4.40+ mutations already expose `isPending`.
 - The codemod renames the `isLoading` flag only. Replace `status === 'loading'` with `status === 'pending'` by hand, in query and mutation checks alike.
 
 Reference: [Migrating to v5](https://tanstack.com/query/v5/docs/framework/react/guides/migrating-to-v5#status-loading-has-been-changed-to-status-pending-and-isloading-has-been-changed-to-ispending-and-isinitialloading-has-now-been-renamed-to-isloading)
@@ -2344,7 +2346,8 @@ npx jscodeshift@latest ./src --extensions=ts,tsx --parser=tsx \
 The codemod moves the option only: rename `isPreviousData` to `isPlaceholderData` by hand.
 
 **Behaviour differences to check after migrating:**
-- `placeholderData` always puts the query in `success` status. `keepPreviousData` reported the previous query's status, which could be `error` after a failed background refetch.
+- Both report `success` while showing the previous data. The difference: v4 `keepPreviousData` kept data only when the previous query was in `success`; v5 `placeholderData: keepPreviousData` keeps the last defined data even if that query errored.
+- The codemod converts only the literal `keepPreviousData: true` (other values get a warning) and adds the `keepPreviousData` import. It covers `useQuery`, `useInfiniteQuery`, `useQueries`, `setQueryDefaults` and `new QueryClient({ defaultOptions })`.
 - `dataUpdatedAt` stays `0` while placeholder data is shown. `keepPreviousData` exposed the previous data's timestamp.
 - Suspense hooks do not accept `placeholderData`; use `startTransition` there.
 
@@ -2363,7 +2366,7 @@ useQuery({
   queryKey: ['user', userId],
   queryFn: () => fetchUser(userId),
   onSuccess: (data) => analytics.track('user_loaded', { id: data.id }),
-  onError: (error) => toast.error(error.message),
+  onError: (error) => toast.error((error as Error).message), // v4 types error as unknown
 });
 ```
 
@@ -2400,9 +2403,9 @@ Reference: [Migrating to v5](https://tanstack.com/query/v5/docs/framework/react/
 
 ### 11.7 New Dedicated Suspense Hooks
 
-**Impact: HIGH (the suspense option is gone in v5; queries stop suspending)** · **Versions:** v4, v5
+**Impact: HIGH (the suspense option is a type error in v5; the dedicated hooks are the supported path)** · **Versions:** v4, v5
 
-v5 removed the experimental `suspense: boolean` flag. Suspense now uses dedicated hooks, and `data` is typed as always defined because loading and error states are handled by `<Suspense>` and error boundaries.
+v5 removed the experimental `suspense: boolean` flag from the types. Suspense now uses dedicated hooks, and `data` is typed as always defined because loading and error states are handled by `<Suspense>` and error boundaries. Plain JS that still passes `suspense: true` keeps suspending through an untyped code path, so don't rely on it. v4.39+ already exports `useSuspenseQuery` and `useSuspenseQueries` (`useSuspenseInfiniteQuery` from 4.41), so you can switch before upgrading.
 
 **v4 (before):**
 
@@ -2476,6 +2479,8 @@ npx jscodeshift@latest ./src --extensions=ts,tsx --parser=tsx \
   --transform=./node_modules/@tanstack/react-query/build/codemods/v5/rename-hydrate/rename-hydrate.cjs
 ```
 
+The codemod renames the `Hydrate` import and JSX only, and aborts the file on a self-closing `<Hydrate state={s} />`. Migrate `useHydrate` and the `dehydrate` options by hand.
+
 **Other hydration changes in v5:**
 - `HydrationBoundary` hydrates only queries. To hydrate mutations, call the low-level `hydrate()` or use the `persistQueryClient` plugin.
 - Timing: new queries are still hydrated during render, so SSR works as before. Queries already in the cache are hydrated in an effect, and only when the incoming data is newer. With Server Components passing fresh data on navigation, you may briefly see the old data. No action is needed.
@@ -2528,7 +2533,7 @@ useInfiniteQuery({
 fetchNextPage();
 ```
 
-**Ending the list:** in v4 only `undefined` meant "no more pages". v5 widened the check, so `getNextPageParam` / `getPreviousPageParam` can return either `undefined` or `null`. Existing `undefined` returns keep working.
+**Ending the list:** return `undefined` or `null`. v4's `hasNextPage` also accepted `false`; v5 does not. A v4 getter that returns `false` now leaves `hasNextPage` true, and `fetchNextPage` calls the `queryFn` with `pageParam: false`.
 
 Reference: [Migrating to v5](https://tanstack.com/query/v5/docs/framework/react/guides/migrating-to-v5#infinite-queries-now-need-a-initialpageparam), [Infinite Queries](https://tanstack.com/query/v5/docs/framework/react/guides/infinite-queries), [v4 Infinite Queries](https://tanstack.com/query/v4/docs/framework/react/guides/infinite-queries)
 
@@ -2536,17 +2541,17 @@ Reference: [Migrating to v5](https://tanstack.com/query/v5/docs/framework/react/
 
 **Impact: MEDIUM (breaking change for infinite queries)** · **Versions:** v4, v5
 
-v5 removed `refetchPage`, which in v4 chose which pages of an infinite query to refetch. Refetching only some pages could leave the UI inconsistent, and the option also existed on `queryClient.refetchQueries` where it did nothing for normal queries. Use `maxPages` instead: it limits how many pages are stored, and therefore how many are refetched.
+v5 removed `refetchPage`, which in v4 chose which pages of an infinite query to refetch. It was never a `useInfiniteQuery` option: it lived on the result's `refetch()` and on the `refetchQueries` / `invalidateQueries` / `resetQueries` filters, where it did nothing for normal queries. Refetching only some pages could leave the UI inconsistent. Use `maxPages` instead: it limits how many pages are stored, and therefore how many are refetched.
 
 **v4 (before):**
 
 ```typescript
-useInfiniteQuery({
+const { refetch } = useInfiniteQuery({
   queryKey: ['projects'],
   queryFn: ({ pageParam = 0 }) => fetchProjectsPage(pageParam),
   getNextPageParam: (lastPage) => lastPage.nextCursor,
-  refetchPage: (_page, index) => index < 2,
 });
+refetch({ refetchPage: (_page, index) => index < 2 });
 
 queryClient.refetchQueries({
   queryKey: ['projects'],
@@ -2626,7 +2631,7 @@ Reference: [Migrating to v5](https://tanstack.com/query/v5/docs/framework/react/
 
 In v5, the `remove()` method on the `useQuery` result was removed. Use `queryClient.removeQueries()` instead.
 
-**Why:** `remove()` removed the query from the cache without notifying observers, leading to inconsistent state. The explicit `removeQueries` call clarifies intent and runs through the standard cache mutation flow.
+**Why:** removing a query that a mounted component still observes only causes a hard loading state on its next render. Removal is meant for imperative cleanup such as logout, which `queryClient.removeQueries` covers. Both call the same `queryCache.remove`, so behaviour is unchanged.
 
 **v4 (before):**
 
@@ -2651,9 +2656,11 @@ const query = useQuery({
 });
 
 const handleReset = () => {
-  queryClient.removeQueries({ queryKey: ['todos'] });
+  queryClient.removeQueries({ queryKey: ['todos'], exact: true });
 };
 ```
+
+`remove()` dropped only this exact query. Without `exact: true`, `removeQueries({ queryKey: ['todos'] })` also removes `['todos', …]`.
 
 Reference: [Migrating to v5](https://tanstack.com/query/v5/docs/framework/react/guides/migrating-to-v5#the-remove-method-has-been-removed-from-usequery)
 
@@ -2663,7 +2670,7 @@ Reference: [Migrating to v5](https://tanstack.com/query/v5/docs/framework/react/
 
 In v5, the `refetchInterval` callback receives only the `query` object — no longer `(data, query)`. Read `data` from `query.state.data`.
 
-**Why:** Aligns with other callback signatures (e.g. `refetchOnWindowFocus`) and removes the data/query staleness mismatch that could occur when the two arguments disagreed.
+**Why:** Aligns with other callback signatures (e.g. `refetchOnWindowFocus`) and fixes typing issues: v4's `data` argument was the `select`-transformed value, while `query.state.data` is raw. The v5 callback may also return `undefined`.
 
 **v4 (before):**
 
@@ -2702,8 +2709,13 @@ v5 removed the `context` option from hooks and the `contextSharing` prop from `Q
 ```typescript
 const customContext = React.createContext<QueryClient | undefined>(undefined);
 
+<QueryClientProvider client={queryClient} context={customContext}>
+  <App />
+</QueryClientProvider>;
+
 useQuery({ queryKey: ['todos'], queryFn: fetchTodos, context: customContext });
 
+// contextSharing was already deprecated in v4
 <QueryClientProvider client={queryClient} contextSharing={true}>
   <App />
 </QueryClientProvider>;
@@ -2785,7 +2797,7 @@ fetchNextPage({ pageParam: 5 });                // v4
 fetchNextPage();                                // v5, page params come only from the getters
 ```
 
-- `getNextPageParam` / `getPreviousPageParam` can now return `null` as well as `undefined` to mean "no more pages". This widens the check and is not breaking; `undefined` still works.
+- `getNextPageParam` / `getPreviousPageParam` end the list with `undefined` or `null` only. A v4 getter that returned `false` (which v4's `hasNextPage` accepted) is no longer treated as the end (see `migration-initial-page-param`).
 - ESLint: delete `@tanstack/query/prefer-query-object-syntax` from your config, because the rule no longer exists.
 - See also `migration-error-type-default` (the `error` type is now `Error`) and `migration-dehydrate-options`.
 
@@ -2882,7 +2894,7 @@ useSuspenseInfiniteQuery(projectsOptions);                                      
 
 Suspense hooks do not accept `enabled`, `placeholderData` or `skipToken`. To keep the old UI while the key changes, wrap the update that changes the key in `startTransition`.
 
-**5.102: `experimental_beforeQuery` / `experimental_afterQuery` client options removed.** Delete them from the `QueryClient` config. There is no replacement.
+**5.102: the untyped `_experimental_beforeQuery` / `_experimental_afterQuery` keys in `defaultOptions.queries` are no longer read.** Delete them from the `QueryClient` config. There is no replacement.
 
 **5.86: `experimental_streamedQuery` options renamed and reshaped:**
 
@@ -2947,7 +2959,7 @@ useMutation(addTodoOptions());
 ```
 
 - Signatures: `mutationFn(variables, context)`, `onMutate(variables, context)`, `onSuccess(data, variables, onMutateResult, context)`, `onError(error, variables, onMutateResult | undefined, context)`, `onSettled(data, error, variables, onMutateResult | undefined, context)`.
-- Since 5.90.2, `onMutateResult` is always defined in `onSuccess`.
+- Since 5.90.2, `onMutateResult` is always defined in the `onSuccess` passed to `useMutation` or `mutationOptions`. The per-call `mutate(vars, { onSuccess })` still types it as possibly `undefined`.
 - `mutationOptions` needs 5.82+.
 
 Reference: [useMutation](https://tanstack.com/query/v5/docs/framework/react/reference/functions/useMutation) · [MutationFunctionContext](https://tanstack.com/query/v5/docs/framework/react/reference/type-aliases/MutationFunctionContext)
@@ -2994,8 +3006,9 @@ useInfiniteQuery({
   queryKey: ['feed'],
   queryFn: ({ pageParam }) => fetchFeed(pageParam.cursor, pageParam.direction), // not ctx.direction
   initialPageParam: { cursor: 0, direction: 'forward' } as FeedParam,
-  getPreviousPageParam: (first) => first.prev == null ? undefined : { cursor: first.prev, direction: 'backward' },
-  getNextPageParam: (last) => last.next == null ? undefined : { cursor: last.next, direction: 'forward' },
+  // annotate the getters: otherwise TPageParam infers `direction: string` and the call fails to compile
+  getPreviousPageParam: (first): FeedParam | undefined => first.prev == null ? undefined : { cursor: first.prev, direction: 'backward' },
+  getNextPageParam: (last): FeedParam | undefined => last.next == null ? undefined : { cursor: last.next, direction: 'forward' },
 });
 ```
 
@@ -3006,6 +3019,8 @@ useIsFetching({ queryKey: ['todos'], fetchStatus: 'fetching' }); // before: type
 useIsFetching({ queryKey: ['todos'] });                          // after: it only ever counts fetching queries
 useIsMutating({ mutationKey: ['addTodo'] });                     // same for status on isMutating/useIsMutating
 ```
+
+The same fields are gone from `queryClient.isFetching` and `queryClient.isMutating`. A repo already on 5.91–5.104 still needs this part: the migrate sweep scopes it `since 5.105`.
 
 - `isInitialLoading` is deprecated in favour of `isLoading` (see `migration-status-pending`).
 
@@ -3035,7 +3050,7 @@ v5 launched with a TypeScript 4.7 floor, but it now follows DefinitelyTyped's tw
 }
 ```
 
-- React 18 is the hard floor for all of v5 (`useSyncExternalStore`). React 19 is supported since 5.39.
+- React 18 is the hard floor for all of v5 (`useSyncExternalStore`). React 19 support landed in 5.39, but the peer range only accepts `^19` from 5.52.1: earlier versions raise peer-dependency errors on install.
 - Type changes are treated as non-breaking and can land in any release. Example: `useQuery` has returned `UseQueryResult<NoInfer<TData>>` since 5.75.5 (#8683). In 5.100.13 that switched to the built-in `NoInfer` (#10593), which broke narrowing of a discriminated-union `data` (issue #11018). 5.102 reverted it (#11245). If `data` narrowing broke on 5.100.13–5.101.x, upgrade to 5.102 or later. Re-run the type check on every bump.
 - Browser targets: Chrome/Edge 91, Firefox 90, Safari/iOS 15, Opera 77. Transpile `node_modules` yourself for older browsers.
 

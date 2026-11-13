@@ -36,7 +36,7 @@ function Article({ id }) {
 }
 ```
 
-**Correct (v5, with Suspense, 5.47+): prefetch above the boundary**
+**Correct (with Suspense, v5.47+ or v4.43+): prefetch above the boundary**
 
 ```typescript
 function ArticleLayout({ id }) {

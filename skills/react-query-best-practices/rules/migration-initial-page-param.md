@@ -48,6 +48,6 @@ useInfiniteQuery({
 fetchNextPage();
 ```
 
-**Ending the list:** in v4 only `undefined` meant "no more pages". v5 widened the check, so `getNextPageParam` / `getPreviousPageParam` can return either `undefined` or `null`. Existing `undefined` returns keep working.
+**Ending the list:** return `undefined` or `null`. v4's `hasNextPage` also accepted `false`; v5 does not. A v4 getter that returns `false` now leaves `hasNextPage` true, and `fetchNextPage` calls the `queryFn` with `pageParam: false`.
 
 Reference: [Migrating to v5](https://tanstack.com/query/v5/docs/framework/react/guides/migrating-to-v5#infinite-queries-now-need-a-initialpageparam), [Infinite Queries](https://tanstack.com/query/v5/docs/framework/react/guides/infinite-queries), [v4 Infinite Queries](https://tanstack.com/query/v4/docs/framework/react/guides/infinite-queries)

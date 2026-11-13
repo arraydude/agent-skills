@@ -29,7 +29,7 @@ const save = useMutation({
 });
 
 save.mutate(draftV1);
-save.mutate(draftV2); // starts paused and runs after draftV1 settles
+save.mutate(draftV2); // onMutate runs now; mutationFn waits paused until draftV1 settles
 ```
 
 - `isPaused` is `true` while a mutation waits in its scope queue, and also while it waits for the network to come back. Account for both before showing "offline" UI.

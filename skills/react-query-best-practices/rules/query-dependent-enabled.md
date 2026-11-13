@@ -44,7 +44,7 @@ const { data: projects } = useQuery({
 });
 ```
 
-- Calling `refetch()` on a query disabled with `skipToken` throws "Missing queryFn". If the query must also be triggered manually, use `enabled: false`.
+- Calling `refetch()` on a query disabled with `skipToken` puts the query into an error state ("Missing queryFn"); the returned promise still resolves. If the query must also be triggered manually, use `enabled: false`.
 - A disabled query with no cached data sits in `pending` (v4: `loading`) with `fetchStatus: 'idle'`, so don't show a spinner from that alone. Use `isLoading` in v5 (`isPending && isFetching`) or `isInitialLoading` in v4 (see `query-status-vs-fetch-status`).
 - v5.48+: `enabled` also accepts `(query) => boolean`. v5.83+: the result exposes `isEnabled`.
 - A disabled query also ignores `invalidateQueries` / `refetchQueries` calls.

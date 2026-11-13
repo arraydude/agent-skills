@@ -30,7 +30,7 @@ const { mutate } = useMutation({
 
 mutate(todo, {
   onSuccess: () => toast.success('Saved!'),
-  onError: (error) => toast.error(error.message),
+  onError: (error) => toast.error(error instanceof Error ? error.message : 'Save failed'), // v4 types error as unknown
 });
 ```
 

@@ -25,8 +25,8 @@ Argument: an optional target version. Default: the latest 5.x on npm
   `package.json` range. Only the v3 package `react-query` present → report that
   v3 → v4 comes first and stop.
 - **Path:** from 4.x, run every step. From 5.x, skip step 4, and step 5 covers
-  only the `upgrade-*` rules (plus `query-imperative-query-method`) whose
-  `since` is above the installed version.
+  only the [sweep.md](sweep.md) rows scoped `since 5.N` above the installed
+  version.
 - **Floors** (`upgrade-toolchain-floors`, `migration-misc-breaking-changes`):
   React `^18 || ^19`, TypeScript and browser minimums. A floor that fails →
   report it and stop: raising React or TypeScript is the human's call.
@@ -61,7 +61,7 @@ npx jscodeshift@latest ./src --extensions=ts,tsx --parser=tsx \
   --transform=./node_modules/@tanstack/react-query/build/codemods/v5/<name>/<name>.cjs
 ```
 
-Releases before 5.104 keep the codemods under `build/codemods/src/v5/`: use
+Releases before 5.103.3 keep the codemods under `build/codemods/src/v5/`: use
 that path when the first one is missing. Use `--extensions=js,jsx` without
 `--parser=tsx` for JavaScript sources. Every
 usage a codemod logs as skipped goes on the step 5 worklist with its file (and

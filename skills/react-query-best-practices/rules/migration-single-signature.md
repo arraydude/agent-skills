@@ -44,7 +44,7 @@ npx jscodeshift@latest ./src --extensions=ts,tsx --parser=tsx \
 ```
 
 - `--parser=tsx` is required for TypeScript files, or the transform is not applied. For `.js`/`.jsx`, use `--extensions=js,jsx` and drop the parser flag.
-- The codemod skips calls whose first argument is already an object with `queryKey`/`mutationKey`. Calls it cannot infer are logged, sometimes with only the file name ("An unknown error occurred while processing"), so fix those by hand. On 5.107.1 it left positional `useInfiniteQuery`, `prefetchQuery`/`fetchQuery` and `getQueryData(key, filters)` calls untouched. Run prettier/eslint afterwards.
+- The codemod skips calls whose first argument is already an object with `queryKey`/`mutationKey`. Calls it cannot infer are logged, sometimes with only the file name ("An unknown error occurred while processing"), so fix those by hand. It converts `useQuery`, `useMutation`, `useIsFetching`, `useIsMutating` and the `QueryClient` filter and fetch methods, but only on clients created in the same file with `new QueryClient()` or `useQueryClient()`: calls on an imported client are skipped without a warning. Two-argument `fetchQuery(key, fn)` / `prefetchQuery(key, fn)` fail with that unknown error. `useInfiniteQuery`, `useQueries`, `getQueryData(key, filters)` and `setQueriesData` are not handled. Run prettier/eslint afterwards.
 - The codemod does not move `fetchQuery`/`prefetchQuery`/`ensureQueryData` to `query()`; see `query-imperative-query-method`.
 
 Reference: [Migrating to v5](https://tanstack.com/query/v5/docs/framework/react/guides/migrating-to-v5#supports-a-single-signature-one-object)

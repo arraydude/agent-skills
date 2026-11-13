@@ -48,7 +48,7 @@ Rules in the current (v5) plugin. The release that added each rule is in parenth
 |---|---|---|
 | `exhaustive-deps` | recommended | queryFn variables missing from `queryKey` (`query-keys-as-dependencies`) |
 | `stable-query-client` | recommended, fixable | `new QueryClient()` inside a component or hook |
-| `no-rest-destructuring` (5.6) | recommended | `{ data, ...rest } = useQuery()` (`query-tracked-properties`) |
+| `no-rest-destructuring` (5.6) | recommended (warn) | `{ data, ...rest } = useQuery()` (`query-tracked-properties`) |
 | `no-unstable-deps` (5.52) | recommended | the query or mutation result object in hook dependency arrays |
 | `infinite-query-property-order` (5.57) | recommended, fixable | property order that breaks infinite-query type inference |
 | `no-void-query-fn` (5.71) | recommended | a `queryFn` with no return value; needs typed linting, and reports nothing under Oxlint |
@@ -57,6 +57,6 @@ Rules in the current (v5) plugin. The release that added each rule is in parenth
 
 - `exhaustive-deps` accepts `allowlist.variables` and `allowlist.types` for stable clients and config objects.
 - Turn off `no-rest-destructuring` only if you set `notifyOnChangeProps` manually.
-- v4: the plugin ships four rules, all in `recommended`: `exhaustive-deps`, `stable-query-client`, `prefer-query-object-syntax` and `no-deprecated-options`. The last two flag code v5 removes (positional signatures, and options such as `onSuccess` on `useQuery`), so turning them on before a v5 upgrade shrinks the migration. v5 dropped `prefer-query-object-syntax`: delete it from the config when upgrading.
+- v4: the plugin ships four rules, all in `recommended`: `exhaustive-deps`, `stable-query-client`, `prefer-query-object-syntax` and `no-deprecated-options`. The last two flag code v5 removes (positional signatures, and options such as `onSuccess` on `useQuery`), so turning them on before a v5 upgrade shrinks the migration. v5 dropped both: delete `prefer-query-object-syntax` and `no-deprecated-options` from any explicit rule config when upgrading, or ESLint fails with "Definition for rule … was not found".
 
 Reference: [ESLint Plugin Query](https://tanstack.com/query/v5/docs/eslint/eslint-plugin-query) · [v4 ESLint Plugin Query](https://tanstack.com/query/v4/docs/eslint/eslint-plugin-query)

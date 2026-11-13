@@ -10,7 +10,7 @@ tags: migration, v5, remove, removeQueries
 
 In v5, the `remove()` method on the `useQuery` result was removed. Use `queryClient.removeQueries()` instead.
 
-**Why:** `remove()` removed the query from the cache without notifying observers, leading to inconsistent state. The explicit `removeQueries` call clarifies intent and runs through the standard cache mutation flow.
+**Why:** removing a query that a mounted component still observes only causes a hard loading state on its next render. Removal is meant for imperative cleanup such as logout, which `queryClient.removeQueries` covers. Both call the same `queryCache.remove`, so behaviour is unchanged.
 
 **v4 (before):**
 
@@ -35,8 +35,10 @@ const query = useQuery({
 });
 
 const handleReset = () => {
-  queryClient.removeQueries({ queryKey: ['todos'] });
+  queryClient.removeQueries({ queryKey: ['todos'], exact: true });
 };
 ```
+
+`remove()` dropped only this exact query. Without `exact: true`, `removeQueries({ queryKey: ['todos'] })` also removes `['todos', …]`.
 
 Reference: [Migrating to v5](https://tanstack.com/query/v5/docs/framework/react/guides/migrating-to-v5#the-remove-method-has-been-removed-from-usequery)

@@ -44,7 +44,7 @@ useQuery({
 ```
 
 - Return a value from the `queryFn`. Resolving `undefined` is treated as a failure, so resolve `null` to cache "nothing". The ESLint rule `no-void-query-fn` catches missing returns (requires typed linting).
-- Errors are retried 3 times with exponential backoff on the client before `error` is set. In v5 the in-progress error is exposed as `failureReason` until the last attempt.
+- Errors are retried 3 times with exponential backoff before `error` is set (v5 doesn't retry on the server by default; v4 does). The in-progress error is exposed as `failureReason` until the last attempt (v4.13+ and v5).
 - v5 types `error` as `Error` by default (v4: `unknown`). If you throw something other than an `Error`, set the generic or register a global error type.
 
 Reference: [Query Functions](https://tanstack.com/query/v5/docs/framework/react/guides/query-functions) · [Query Retries](https://tanstack.com/query/v5/docs/framework/react/guides/query-retries) · [v4 Query Functions](https://tanstack.com/query/v4/docs/framework/react/guides/query-functions)

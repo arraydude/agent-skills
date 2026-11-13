@@ -9,7 +9,7 @@ since: "5.79"
 
 ## staleTime 'static' vs Infinity
 
-Both values stop staleness-based refetches. Use `Infinity` when the data changes only through your own invalidation, for example WebSocket events or mutations. Use `'static'` (since 5.79, #9139) for data that cannot change while the app runs. With `'static'`, `invalidateQueries` has no effect, and `refetchOnMount`, `refetchOnWindowFocus` and `refetchOnReconnect` set to `'always'` are blocked as well.
+Both values stop staleness-based refetches. Use `Infinity` when the data changes only through your own invalidation, for example WebSocket events or mutations. Use `'static'` (since 5.79, #9139) for data that cannot change while the app runs. With `'static'`, `invalidateQueries` and `refetchQueries` skip the query (only while an observer with `'static'` is mounted: `refetchType: 'inactive'` or `'all'` still refetches an unobserved one), and `refetchOnMount`, `refetchOnWindowFocus` and `refetchOnReconnect` set to `'always'` are blocked as well.
 
 **Incorrect (`'static'` on data that mutations update):**
 

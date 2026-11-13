@@ -33,7 +33,7 @@ fetchNextPage({ pageParam: 5 });                // v4
 fetchNextPage();                                // v5, page params come only from the getters
 ```
 
-- `getNextPageParam` / `getPreviousPageParam` can now return `null` as well as `undefined` to mean "no more pages". This widens the check and is not breaking; `undefined` still works.
+- `getNextPageParam` / `getPreviousPageParam` end the list with `undefined` or `null` only. A v4 getter that returned `false` (which v4's `hasNextPage` accepted) is no longer treated as the end (see `migration-initial-page-param`).
 - ESLint: delete `@tanstack/query/prefer-query-object-syntax` from your config, because the rule no longer exists.
 - See also `migration-error-type-default` (the `error` type is now `Error`) and `migration-dehydrate-options`.
 

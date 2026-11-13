@@ -38,7 +38,7 @@ useSuspenseInfiniteQuery(projectsOptions);                                      
 
 Suspense hooks do not accept `enabled`, `placeholderData` or `skipToken`. To keep the old UI while the key changes, wrap the update that changes the key in `startTransition`.
 
-**5.102: `experimental_beforeQuery` / `experimental_afterQuery` client options removed.** Delete them from the `QueryClient` config. There is no replacement.
+**5.102: the untyped `_experimental_beforeQuery` / `_experimental_afterQuery` keys in `defaultOptions.queries` are no longer read.** Delete them from the `QueryClient` config. There is no replacement.
 
 **5.86: `experimental_streamedQuery` options renamed and reshaped:**
 

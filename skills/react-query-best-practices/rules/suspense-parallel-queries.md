@@ -39,6 +39,6 @@ function App() {
 - Queries inside `useSuspenseQueries` can't use `enabled`, `placeholderData` or `throwOnError`, the same as `useSuspenseQuery`.
 - Serial fetching is what you want for dependent queries, because suspense queries in one component run in order.
 
-v4 users: see `migration-suspense-hooks` for moving from `suspense: true` to the v5 hooks.
+v4.39+ also exports `useSuspenseQueries`, and this code compiles there. Older v4: see `migration-suspense-hooks` for moving off `suspense: true`.
 
 Reference: [Performance & Request Waterfalls](https://tanstack.com/query/v5/docs/framework/react/guides/request-waterfalls#single-component-waterfalls--serial-queries), [useSuspenseQueries](https://tanstack.com/query/v5/docs/framework/react/reference/functions/useSuspenseQueries)

@@ -8,7 +8,7 @@ versions: v4, v5
 
 ## Invalidate Queries After Mutations
 
-After a mutation succeeds, call `invalidateQueries` with the key prefix it affects. This marks every matching query stale, even one with a long `staleTime`, and refetches the ones currently on screen. Return or `await` the promise so the mutation stays pending until that refetch finishes.
+After a mutation succeeds, call `invalidateQueries` with the key prefix it affects. This marks every matching query stale, even one with a long `staleTime` (v5 `staleTime: 'static'` is the exception), and refetches the ones currently on screen. Return or `await` the promise so the mutation stays pending until that refetch finishes.
 
 **Incorrect (refetching one observer by hand):**
 
@@ -48,7 +48,7 @@ onSuccess: () =>
 // v5
 <button disabled={mutation.isPending}>Save</button>
 // v4
-<button disabled={mutation.isLoading}>Save</button>
+<button disabled={mutation.isLoading}>Save</button> {/* v4.40+: isPending */}
 ```
 
 - By default only active queries refetch (`refetchType: 'active'`). Use `'all'`, `'inactive'` or `'none'` to change that. Use `exact: true` or a `predicate` for narrower matches.

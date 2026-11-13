@@ -13,7 +13,7 @@ Use `initialData` only for complete data you trust: it is persisted to the cache
 | Aspect | initialData | placeholderData |
 |--------|-------------|-----------------|
 | Written to cache | Yes | No |
-| Freshness | Treated as fetched now (or at `initialDataUpdatedAt`), so `staleTime` applies | Only shown while the cache is empty, so the real fetch always runs |
+| Freshness | Treated as fetched now (or at `initialDataUpdatedAt`), so `staleTime` applies | Only shown while the cache is empty; never counts as cached data, so it never prevents the fetch |
 | Result flag | none | `isPlaceholderData: true` |
 
 **Incorrect (partial preview data persisted as if complete):**
@@ -23,7 +23,7 @@ useQuery({
   queryKey: ['blogPost', id],
   queryFn: () => fetchPost(id),
   // list items only have title + snippet, but this is now "the" cached post
-  initialData: () => queryClient.getQueryData(['blogPosts'])?.find((p) => p.id === id),
+  initialData: () => queryClient.getQueryData<Post[]>(['blogPosts'])?.find((p) => p.id === id),
 });
 ```
 
@@ -33,13 +33,13 @@ useQuery({
 useQuery({
   queryKey: ['blogPost', id],
   queryFn: () => fetchPost(id),
-  placeholderData: () => queryClient.getQueryData(['blogPosts'])?.find((p) => p.id === id),
+  placeholderData: () => queryClient.getQueryData<Post[]>(['blogPosts'])?.find((p) => p.id === id),
 });
 
 useQuery({
   queryKey: ['todo', todoId],
   queryFn: () => fetchTodo(todoId),
-  initialData: () => queryClient.getQueryData(['todos'])?.find((t) => t.id === todoId),
+  initialData: () => queryClient.getQueryData<Todo[]>(['todos'])?.find((t) => t.id === todoId),
   initialDataUpdatedAt: () => queryClient.getQueryState(['todos'])?.dataUpdatedAt,
 });
 ```
@@ -67,7 +67,7 @@ const { data, isPreviousData } = useQuery({
 });
 ```
 
-- v5: a query with placeholder data starts in `success` status, and `isPlaceholderData: true` narrows the result type (5.65).
+- A query with placeholder data reports `status: 'success'`. In v5.65+, `isPlaceholderData: true` also narrows the result type.
 - v5 suspense hooks have no `placeholderData`: wrap key changes in `startTransition` instead.
 - Infinite queries: `initialData` and `placeholderData` must have the `{ pages, pageParams }` shape.
 

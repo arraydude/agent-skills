@@ -8,7 +8,7 @@ versions: v4, v5
 
 ## Tracked Properties
 
-The query result is a Proxy that records which fields you read. The component re-renders only when one of those fields changes. Read only the fields you need, and never use object rest on the result.
+The query result records which fields you read (a Proxy in v5, property getters in v4). The component re-renders only when one of those fields changes. Read only the fields you need, and never use object rest on the result.
 
 **Incorrect (rest destructuring subscribes to every field):**
 
@@ -28,7 +28,7 @@ const { data, isError } = useQuery({ queryKey: ['todos'], queryFn: fetchTodos })
 const useTodos = () => useQuery({ queryKey: ['todos'], queryFn: fetchTodos });
 ```
 
-The result object itself is a new reference on every render; only `data` is kept stable. Put the fields you use in hook dependency arrays, not the whole result:
+The result object itself is a new reference on every render; its fields keep their identity until they change. Put the fields you use in hook dependency arrays, not the whole result:
 
 ```typescript
 const todosQuery = useQuery({ queryKey: ['todos'], queryFn: fetchTodos });

@@ -10,7 +10,7 @@ tags: migration, v5, refetchInterval, polling
 
 In v5, the `refetchInterval` callback receives only the `query` object — no longer `(data, query)`. Read `data` from `query.state.data`.
 
-**Why:** Aligns with other callback signatures (e.g. `refetchOnWindowFocus`) and removes the data/query staleness mismatch that could occur when the two arguments disagreed.
+**Why:** Aligns with other callback signatures (e.g. `refetchOnWindowFocus`) and fixes typing issues: v4's `data` argument was the `select`-transformed value, while `query.state.data` is raw. The v5 callback may also return `undefined`.
 
 **v4 (before):**
 

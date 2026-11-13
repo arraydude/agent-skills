@@ -40,7 +40,8 @@ return <List items={data} />;
 **Alternative (data first, keep cached data visible when a refetch fails):**
 
 ```typescript
-// v5 names; in v4 use isLoading instead of isPending
+// v5 names; in v4 use isLoading instead of isPending, and narrow error (it is unknown):
+// error instanceof Error ? error.message : 'Error'
 const { data, error, isPending } = useQuery({ queryKey: ['todos'], queryFn: fetchTodos });
 
 if (data !== undefined) return <List items={data} stale={!!error} />;

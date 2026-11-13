@@ -8,7 +8,7 @@ versions: v4, v5
 
 ## Invalidate Everything the Socket Owns on Reconnect
 
-While the socket is down, events are lost and nothing gets marked invalidated. On reconnect, invalidate every key the socket manages, or the whole cache. Do not filter on `query.state.isInvalidated`: that flag resets on every successful fetch, and invalidated queries that are on screen have already refetched. That filter therefore matches only inactive queries, which the default `refetchType: 'active'` does not refetch, so the handler does almost nothing.
+While the socket is down, events are lost and nothing gets marked invalidated. On reconnect, invalidate every key the socket manages, or the whole cache. Do not filter on `query.state.isInvalidated`: that flag resets on every successful fetch, and invalidated queries that are on screen have already refetched. That filter therefore matches mostly inactive queries (plus disabled ones and those whose last fetch failed), which the default `refetchType: 'active'` does not refetch, so the handler does almost nothing.
 
 **Incorrect (matches almost nothing):**
 

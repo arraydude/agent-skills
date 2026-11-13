@@ -50,7 +50,7 @@ useMutation(addTodoOptions());
 ```
 
 - Signatures: `mutationFn(variables, context)`, `onMutate(variables, context)`, `onSuccess(data, variables, onMutateResult, context)`, `onError(error, variables, onMutateResult | undefined, context)`, `onSettled(data, error, variables, onMutateResult | undefined, context)`.
-- Since 5.90.2, `onMutateResult` is always defined in `onSuccess`.
+- Since 5.90.2, `onMutateResult` is always defined in the `onSuccess` passed to `useMutation` or `mutationOptions`. The per-call `mutate(vars, { onSuccess })` still types it as possibly `undefined`.
 - `mutationOptions` needs 5.82+.
 
 Reference: [useMutation](https://tanstack.com/query/v5/docs/framework/react/reference/functions/useMutation) · [MutationFunctionContext](https://tanstack.com/query/v5/docs/framework/react/reference/type-aliases/MutationFunctionContext)

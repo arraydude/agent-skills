@@ -17,7 +17,7 @@ useQuery({
   queryKey: ['user', userId],
   queryFn: () => fetchUser(userId),
   onSuccess: (data) => analytics.track('user_loaded', { id: data.id }),
-  onError: (error) => toast.error(error.message),
+  onError: (error) => toast.error((error as Error).message), // v4 types error as unknown
 });
 ```
 

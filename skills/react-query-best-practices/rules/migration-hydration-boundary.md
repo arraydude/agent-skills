@@ -41,6 +41,8 @@ npx jscodeshift@latest ./src --extensions=ts,tsx --parser=tsx \
   --transform=./node_modules/@tanstack/react-query/build/codemods/v5/rename-hydrate/rename-hydrate.cjs
 ```
 
+The codemod renames the `Hydrate` import and JSX only, and aborts the file on a self-closing `<Hydrate state={s} />`. Migrate `useHydrate` and the `dehydrate` options by hand.
+
 **Other hydration changes in v5:**
 - `HydrationBoundary` hydrates only queries. To hydrate mutations, call the low-level `hydrate()` or use the `persistQueryClient` plugin.
 - Timing: new queries are still hydrated during render, so SSR works as before. Queries already in the cache are hydrated in an effect, and only when the incoming data is newer. With Server Components passing fresh data on navigation, you may briefly see the old data. No action is needed.

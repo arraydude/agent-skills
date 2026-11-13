@@ -47,8 +47,9 @@ useInfiniteQuery({
   queryKey: ['feed'],
   queryFn: ({ pageParam }) => fetchFeed(pageParam.cursor, pageParam.direction), // not ctx.direction
   initialPageParam: { cursor: 0, direction: 'forward' } as FeedParam,
-  getPreviousPageParam: (first) => first.prev == null ? undefined : { cursor: first.prev, direction: 'backward' },
-  getNextPageParam: (last) => last.next == null ? undefined : { cursor: last.next, direction: 'forward' },
+  // annotate the getters: otherwise TPageParam infers `direction: string` and the call fails to compile
+  getPreviousPageParam: (first): FeedParam | undefined => first.prev == null ? undefined : { cursor: first.prev, direction: 'backward' },
+  getNextPageParam: (last): FeedParam | undefined => last.next == null ? undefined : { cursor: last.next, direction: 'forward' },
 });
 ```
 
@@ -59,6 +60,8 @@ useIsFetching({ queryKey: ['todos'], fetchStatus: 'fetching' }); // before: type
 useIsFetching({ queryKey: ['todos'] });                          // after: it only ever counts fetching queries
 useIsMutating({ mutationKey: ['addTodo'] });                     // same for status on isMutating/useIsMutating
 ```
+
+The same fields are gone from `queryClient.isFetching` and `queryClient.isMutating`. A repo already on 5.91–5.104 still needs this part: the migrate sweep scopes it `since 5.105`.
 
 - `isInitialLoading` is deprecated in favour of `isLoading` (see `migration-status-pending`).
 

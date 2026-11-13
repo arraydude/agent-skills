@@ -1,14 +1,14 @@
 ---
 title: New Dedicated Suspense Hooks
 impact: HIGH
-impactDescription: the suspense option is gone in v5; queries stop suspending
+impactDescription: the suspense option is a type error in v5; the dedicated hooks are the supported path
 tags: migration, v5, suspense, useSuspenseQuery
 versions: v4, v5
 ---
 
 ## New Dedicated Suspense Hooks
 
-v5 removed the experimental `suspense: boolean` flag. Suspense now uses dedicated hooks, and `data` is typed as always defined because loading and error states are handled by `<Suspense>` and error boundaries.
+v5 removed the experimental `suspense: boolean` flag from the types. Suspense now uses dedicated hooks, and `data` is typed as always defined because loading and error states are handled by `<Suspense>` and error boundaries. Plain JS that still passes `suspense: true` keeps suspending through an untyped code path, so don't rely on it. v4.39+ already exports `useSuspenseQuery` and `useSuspenseQueries` (`useSuspenseInfiniteQuery` from 4.41), so you can switch before upgrading.
 
 **v4 (before):**
 

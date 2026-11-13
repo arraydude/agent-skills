@@ -39,7 +39,7 @@ useQuery({
 ```
 
 - `Infinity` means the data is never stale until you invalidate it. v5.79+ adds `'static'`, which also ignores `invalidateQueries` (see `cache-static-vs-infinity`). v4 accepts only a number.
-- Garbage collection is a separate setting. Inactive queries are removed after 5 minutes by default: `gcTime` in v5, `cacheTime` in v4 (see `migration-cache-time-to-gc-time`). Don't restate defaults (`gcTime` 5 min, `retry` 3 on the client and 0 on the server in v5) in your config.
+- Garbage collection is a separate setting. Inactive queries are removed after 5 minutes by default: `gcTime` in v5, `cacheTime` in v4 (see `migration-cache-time-to-gc-time`). Don't restate defaults (`gcTime` 5 min on the client, `retry` 3 on the client and 0 on the server in v5) in your config.
 - `refetchInterval` polls regardless of `staleTime`.
 
 Reference: [Important Defaults](https://tanstack.com/query/v5/docs/framework/react/guides/important-defaults) · [Caching](https://tanstack.com/query/v5/docs/framework/react/guides/caching) · [v4 Important Defaults](https://tanstack.com/query/v4/docs/framework/react/guides/important-defaults)
