@@ -1,35 +1,43 @@
 ---
-title: Custom context Prop Replaced by queryClient Argument
+title: Custom context and contextSharing Replaced by a queryClient Argument
 impact: LOW
-impactDescription: breaking change for apps with multiple QueryClients
-tags: migration, v5, context, queryClient, micro-frontend
+impactDescription: breaking change for micro-frontends and apps with several QueryClients
+tags: migration, v5, context, contextSharing, queryClient, micro-frontend
+versions: v4, v5
 ---
 
-## Custom context Prop Replaced by queryClient Argument
+## Custom context and contextSharing Replaced by a queryClient Argument
 
-In v5, the `context` option was removed. Pass a custom `QueryClient` instance directly as the second argument to hooks instead.
-
-**Why:** Custom contexts existed mainly for micro-frontend isolation. Passing the client explicitly is more direct, type-safe, and avoids React context plumbing.
+v5 removed the `context` option from hooks and the `contextSharing` prop from `QueryClientProvider`. For isolation, pass a specific `QueryClient` as the hook's second argument. To share a client across bundles or packages, pass the same client instance everywhere.
 
 **v4 (before):**
 
 ```typescript
 const customContext = React.createContext<QueryClient | undefined>(undefined);
 
-useQuery({
-  queryKey: ['todos'],
-  queryFn: fetchTodos,
-  context: customContext,
-});
+<QueryClientProvider client={queryClient} context={customContext}>
+  <App />
+</QueryClientProvider>;
+
+useQuery({ queryKey: ['todos'], queryFn: fetchTodos, context: customContext });
+
+// contextSharing was already deprecated in v4
+<QueryClientProvider client={queryClient} contextSharing={true}>
+  <App />
+</QueryClientProvider>;
 ```
 
 **v5 (after):**
 
 ```typescript
-import { customQueryClient } from './my-client';
+import { sharedQueryClient } from './query-client';
 
-useQuery(
-  { queryKey: ['todos'], queryFn: fetchTodos },
-  customQueryClient,
-);
+useQuery({ queryKey: ['todos'], queryFn: fetchTodos }, sharedQueryClient);
+useMutation({ mutationFn: addTodo }, sharedQueryClient);
+
+<QueryClientProvider client={sharedQueryClient}>
+  <App />
+</QueryClientProvider>;
 ```
+
+Reference: [Migrating to v5](https://tanstack.com/query/v5/docs/framework/react/guides/migrating-to-v5#removed-custom-context-prop-in-favor-of-custom-queryclient-instance)

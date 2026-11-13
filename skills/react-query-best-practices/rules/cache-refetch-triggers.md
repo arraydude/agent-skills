@@ -1,15 +1,16 @@
 ---
 title: Refetch Triggers
 impact: HIGH
-impactDescription: data freshness
-tags: cache, refetch, windowFocus, reconnect
+impactDescription: keeps data fresh without excess requests
+tags: cache, refetch, windowFocus, reconnect, mount
+versions: v4, v5
 ---
 
 ## Refetch Triggers
 
-Keep refetch triggers enabled in production. They're features, not bugs.
+Leave `refetchOnMount`, `refetchOnWindowFocus` and `refetchOnReconnect` on. They refetch only stale queries, so `staleTime` is the setting that controls how often they fire. Disable a trigger only when something else keeps the data fresh.
 
-**Incorrect (over-disabling):**
+**Incorrect (turning every trigger off to silence refetches):**
 
 ```typescript
 useQuery({
@@ -18,28 +19,34 @@ useQuery({
   refetchOnMount: false,
   refetchOnWindowFocus: false,
   refetchOnReconnect: false,
-  staleTime: Infinity,
-});
-// Data never updates automatically!
+}); // staleTime is still 0, but only explicit invalidation refreshes the data
 ```
 
-**Correct (appropriate configuration):**
+**Correct (tune staleTime, keep the triggers):**
 
 ```typescript
-// Most queries: keep defaults
-useQuery({
-  queryKey: ['user'],
-  queryFn: fetchUser,
-  staleTime: 1000 * 60 * 5, // 5 minutes
-  // refetchOnWindowFocus: true (default)
-  // refetchOnMount: true (default)
-});
+useQuery({ queryKey: ['user'], queryFn: fetchUser, staleTime: 5 * 60 * 1000 });
 
-// Only disable for truly static or WebSocket-managed data
+// Data pushed over a WebSocket: Infinity alone already stops staleness-based refetches.
+// Invalidating marks it stale, after which the triggers apply again.
+useQuery({ queryKey: ['automations', id], queryFn: () => fetchAutomation(id), staleTime: Infinity });
+```
+
+**Correct (`'always'` and callback forms):**
+
+```typescript
 useQuery({
-  queryKey: ['automations', id],
-  queryFn: () => fetchAutomation(id),
-  staleTime: Infinity,
-  refetchOnWindowFocus: false, // WebSocket handles this
+  queryKey: ['inbox'],
+  queryFn: fetchInbox,
+  refetchOnWindowFocus: 'always',                                  // refetch even when fresh
+  refetchOnMount: (query) => query.state.status === 'error',       // callback receives the query
 });
 ```
+
+- These callbacks receive only `query` (v4 and v5). If you need data, read `query.state.data`, which has not been through `select`.
+- `staleTime: 'static'` (v5.79+) blocks even the `'always'` settings.
+- `refetchOnReconnect` defaults to `false` under `networkMode: 'always'`.
+- v5 detects focus only through `visibilitychange`, not the `focus` event. If refocusing doesn't refetch in development, turn off Chrome DevTools > Rendering > "Emulate a focused page".
+- Use `focusManager.setEventListener` / `focusManager.setFocused` for custom focus sources (e.g. React Native `AppState`).
+
+Reference: [Window Focus Refetching](https://tanstack.com/query/v5/docs/framework/react/guides/window-focus-refetching) · [Important Defaults](https://tanstack.com/query/v5/docs/framework/react/guides/important-defaults) · [v4 Window Focus Refetching](https://tanstack.com/query/v4/docs/framework/react/guides/window-focus-refetching)

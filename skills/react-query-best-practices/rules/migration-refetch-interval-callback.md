@@ -2,6 +2,7 @@
 title: refetchInterval Callback Signature Changed
 impact: LOW
 impactDescription: breaking change for dynamic polling intervals
+versions: v4, v5
 tags: migration, v5, refetchInterval, polling
 ---
 
@@ -9,7 +10,7 @@ tags: migration, v5, refetchInterval, polling
 
 In v5, the `refetchInterval` callback receives only the `query` object — no longer `(data, query)`. Read `data` from `query.state.data`.
 
-**Why:** Aligns with other callback signatures (e.g. `refetchOnWindowFocus`) and removes the data/query staleness mismatch that could occur when the two arguments disagreed.
+**Why:** Aligns with other callback signatures (e.g. `refetchOnWindowFocus`) and fixes typing issues: v4's `data` argument was the `select`-transformed value, while `query.state.data` is raw. The v5 callback may also return `undefined`.
 
 **v4 (before):**
 
@@ -32,3 +33,7 @@ useQuery({
     query.state.data?.status === 'done' ? false : 5000,
 });
 ```
+
+- `query.state.data` is the raw cached data: `select` has not run on it.
+
+Reference: [Migrating to v5](https://tanstack.com/query/v5/docs/framework/react/guides/migrating-to-v5#the-refetchinterval-callback-function-only-gets-query-passed)
